@@ -3,7 +3,7 @@
       {
         "id": 1,
         "title": "Summer Vibes",
-        "artist": "Chill Wave",
+        "artist": "Danial Levi",
         "album": "Beach Memories",
         "src": "/song1.mp3",
         "cover": "/img26.jpg"
@@ -11,7 +11,7 @@
       {
         "id": 2,
         "title": "Midnight Drive",
-        "artist": "Night Rider",
+        "artist": "Jigsaw",
         "album": "City Lights",
         "src": "/song2.mp3",
         "cover": "/img2.jpg"
@@ -19,15 +19,15 @@
       {
         "id": 3,
         "title": "Morning Coffee",
-        "artist": "Acoustic Breeze",
+        "artist": "Janji and Johnning",
         "album": "Quiet Moments",
         "src": "/song3.mp3",
         "cover": "/img25.jpg"
       },
       {
         "id": 4,
-        "title": "Electric Dreams",
-        "artist": "Synth Master",
+        "title": "Shine",
+        "artist": "Spektrem",
         "album": "Future Sounds",
         "src": "/4.mp3",
         "cover": "/img4.jpg"
@@ -35,7 +35,7 @@
       {
         "id": 5,
         "title": "Rainy Day",
-        "artist": "Piano Soul",
+        "artist": "Coleman Trap",
         "album": "Weather Moods",
         "src": "/5.mp3",
         "cover": "/img27.jpg"
@@ -43,15 +43,15 @@
       {
         "id": 6,
         "title": "Sunset Boulevard",
-        "artist": "Urban Jazz",
+        "artist": "Kelly Clarkson",
         "album": "Metropolitan",
-        "src": "/6.mp3",
+        "src": "/2.mp3",
         "cover": "/img6.jpg"
       },
       {
         "id": 7,
         "title": "Mountain High",
-        "artist": "Nature Sounds",
+        "artist": "Electro-Light",
         "album": "Wilderness",
         "src": "/7.mp3",
         "cover": "/img24.jpg"
@@ -59,7 +59,7 @@
       {
         "id": 8,
         "title": "Ocean Deep",
-        "artist": "Aqua Marine",
+        "artist": "Celine Dion",
         "album": "Blue World",
         "src": "/8.mp3",
         "cover": "/image21.jpg"
@@ -75,7 +75,7 @@
       {
         "id": 10,
         "title": "Forest Echo",
-        "artist": "Green Leaf",
+        "artist": "Syn Coal",
         "album": "Nature's Call",
         "src": "/10.mp3",
         "cover": "/img23.jpg"
