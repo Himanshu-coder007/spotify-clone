@@ -1,5 +1,5 @@
 // pages/Home.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import MusicPlayer from "../components/MusicPlayer";
 import songsData from "../data/songs.json";
 
@@ -22,60 +22,60 @@ const Home = () => {
   const topTracks = [
     {
       track: {
-        name: "Top Track 1",
-        artists: [{ name: "Popular Artist" }],
+        name: "Summer Vibes",
+        artists: [{ name: "Chill Wave" }],
         album: {
-          name: "Hit Album",
+          name: "Beach Memories",
           images: [{ url: "/img1.jpg" }],
         },
       },
     },
     {
       track: {
-        name: "Top Track 2",
-        artists: [{ name: "Popular Artist" }],
+        name: "Midnight Drive",
+        artists: [{ name: "Night Rider" }],
         album: {
-          name: "Hit Album",
+          name: "City Lights",
           images: [{ url: "/img2.jpg" }],
         },
       },
     },
     {
       track: {
-        name: "Top Track 3",
-        artists: [{ name: "Popular Artist" }],
+        name: "Morning Coffee",
+        artists: [{ name: "Acoustic Breeze" }],
         album: {
-          name: "Hit Album",
+          name: "Quiet Moments",
           images: [{ url: "/img3.jpg" }],
         },
       },
     },
     {
       track: {
-        name: "Top Track 4",
-        artists: [{ name: "Popular Artist" }],
+        name: "Electric Dreams",
+        artists: [{ name: "Synth Master" }],
         album: {
-          name: "Hit Album",
+          name: "Future Sounds",
           images: [{ url: "/img4.jpg" }],
         },
       },
     },
     {
       track: {
-        name: "Top Track 5",
-        artists: [{ name: "Popular Artist" }],
+        name: "Rainy Day",
+        artists: [{ name: "Piano Soul" }],
         album: {
-          name: "Hit Album",
+          name: "Weather Moods",
           images: [{ url: "/img5.jpg" }],
         },
       },
     },
     {
       track: {
-        name: "Top Track 6",
-        artists: [{ name: "Popular Artist" }],
+        name: "Sunset Boulevard",
+        artists: [{ name: "Urban Jazz" }],
         album: {
-          name: "Hit Album",
+          name: "Metropolitan",
           images: [{ url: "/img6.jpg" }],
         },
       },
@@ -106,7 +106,6 @@ const Home = () => {
 
   const handleTrackClick = (trackIndex) => {
     const songs = songsData.songs;
-    // Find the corresponding song in our JSON data
     const clickedTrack = topTracks[trackIndex];
     const songIndex = songs.findIndex(
       song => song.cover === clickedTrack.track.album.images[0].url
@@ -117,6 +116,11 @@ const Home = () => {
       setIsPlaying(true);
       setShowPlayer(true);
     }
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlaying(false);
+    setShowPlayer(false);
   };
 
   if (loading) {
@@ -249,11 +253,11 @@ const Home = () => {
                 ) : (
                   <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-pink-600 to-rose-400 group-hover:shadow-lg transition-shadow"></div>
                 )}
-                <div>
-                  <h3 className="text-lg font-bold text-white">
+                <div className="truncate">
+                  <h3 className="text-lg font-bold text-white truncate">
                     {item.track?.name || `Track ${index + 1}`}
                   </h3>
-                  <p className="text-md text-gray-400 mt-1">
+                  <p className="text-md text-gray-400 mt-1 truncate">
                     {item.track?.artists
                       ?.map((artist) => artist.name)
                       .join(", ") || "Various artists"}
@@ -272,6 +276,7 @@ const Home = () => {
           setCurrentTrack={setCurrentTrack}
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}
+          onClose={handleClosePlayer}
         />
       )}
     </div>

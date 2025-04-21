@@ -1,9 +1,9 @@
 // components/MusicPlayer.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
+import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaVolumeUp, FaVolumeMute, FaTimes } from 'react-icons/fa';
 import songsData from '../data/songs.json';
 
-const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying }) => {
+const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, onClose }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
@@ -15,7 +15,10 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying })
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play();
+        audioRef.current.play().catch(error => {
+          console.error("Playback failed:", error);
+          setIsPlaying(false);
+        });
       } else {
         audioRef.current.pause();
       }
@@ -70,6 +73,7 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying })
   };
 
   const formatTime = (time) => {
+    if (isNaN(time)) return "0:00";
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
@@ -85,7 +89,16 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying })
         onLoadedMetadata={handleTimeUpdate}
       />
       
-      <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center gap-4">
+      <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center gap-4 relative">
+        {/* Close Button - Top Right */}
+        <button 
+          onClick={onClose}
+          className="absolute top-3 right-4 text-gray-400 hover:text-white transition-colors"
+          aria-label="Close player"
+        >
+          <FaTimes size={16} />
+        </button>
+
         {/* Track Info */}
         <div className="flex items-center gap-4 w-full md:w-1/4">
           <img 
@@ -93,9 +106,9 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying })
             alt={currentTrack.title} 
             className="w-16 h-16 rounded-md object-cover"
           />
-          <div>
-            <h3 className="text-white font-medium">{currentTrack.title}</h3>
-            <p className="text-gray-400 text-sm">{currentTrack.artist}</p>
+          <div className="truncate">
+            <h3 className="text-white font-medium truncate">{currentTrack.title}</h3>
+            <p className="text-gray-400 text-sm truncate">{currentTrack.artist}</p>
           </div>
         </div>
 
@@ -105,18 +118,21 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying })
             <button 
               onClick={handlePrevious}
               className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Previous track"
             >
               <FaStepBackward size={18} />
             </button>
             <button 
               onClick={handlePlayPause}
               className="bg-white text-black rounded-full w-10 h-10 flex items-center justify-center hover:scale-105 transition-transform"
+              aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? <FaPause size={16} /> : <FaPlay size={16} className="ml-1" />}
             </button>
             <button 
               onClick={handleNext}
               className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Next track"
             >
               <FaStepForward size={18} />
             </button>
@@ -135,8 +151,9 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying })
               onChange={handleSeek}
               className="w-full h-1 bg-gray-700 rounded-full appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, #1DB954 0%, #1DB954 ${(currentTime / duration) * 100}%, #4D4D4D ${(currentTime / duration) * 100}%, #4D4D4D 100%)`
+                background: `linear-gradient(to right, #1DB954 0%, #1DB954 ${(currentTime / (duration || 1)) * 100}%, #4D4D4D ${(currentTime / (duration || 1)) * 100}%, #4D4D4D 100%)`
               }}
+              aria-label="Track progress"
             />
             <span className="text-xs text-gray-400 w-10">
               {formatTime(duration)}
@@ -144,9 +161,13 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying })
           </div>
         </div>
 
-        {/* Volume Control */}
-        <div className="flex items-center gap-2 w-full md:w-1/4 justify-end">
-          <button onClick={toggleMute} className="text-gray-400 hover:text-white">
+        {/* Volume Control - Positioned lower than close button */}
+        <div className="flex items-center gap-2 w-full md:w-1/4 justify-end mt-8">
+          <button 
+            onClick={toggleMute} 
+            className="text-gray-400 hover:text-white"
+            aria-label={isMuted ? "Unmute" : "Mute"}
+          >
             {isMuted || volume === 0 ? <FaVolumeMute size={18} /> : <FaVolumeUp size={18} />}
           </button>
           <input
@@ -160,6 +181,7 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying })
             style={{
               background: `linear-gradient(to right, #1DB954 0%, #1DB954 ${volume * 100}%, #4D4D4D ${volume * 100}%, #4D4D4D 100%)`
             }}
+            aria-label="Volume control"
           />
         </div>
       </div>
