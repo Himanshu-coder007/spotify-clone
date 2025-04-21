@@ -1,0 +1,85 @@
+{
+    "songs": [
+      {
+        "id": 1,
+        "title": "Summer Vibes",
+        "artist": "Chill Wave",
+        "album": "Beach Memories",
+        "src": "/song1.mp3",
+        "cover": "/img1.jpg"
+      },
+      {
+        "id": 2,
+        "title": "Midnight Drive",
+        "artist": "Night Rider",
+        "album": "City Lights",
+        "src": "/song2.mp3",
+        "cover": "/img2.jpg"
+      },
+      {
+        "id": 3,
+        "title": "Morning Coffee",
+        "artist": "Acoustic Breeze",
+        "album": "Quiet Moments",
+        "src": "/song3.mp3",
+        "cover": "/img3.jpg"
+      },
+      {
+        "id": 4,
+        "title": "Electric Dreams",
+        "artist": "Synth Master",
+        "album": "Future Sounds",
+        "src": "/song4.mp3",
+        "cover": "/img4.jpg"
+      },
+      {
+        "id": 5,
+        "title": "Rainy Day",
+        "artist": "Piano Soul",
+        "album": "Weather Moods",
+        "src": "/song5.mp3",
+        "cover": "/img5.jpg"
+      },
+      {
+        "id": 6,
+        "title": "Sunset Boulevard",
+        "artist": "Urban Jazz",
+        "album": "Metropolitan",
+        "src": "/song6.mp3",
+        "cover": "/img6.jpg"
+      },
+      {
+        "id": 7,
+        "title": "Mountain High",
+        "artist": "Nature Sounds",
+        "album": "Wilderness",
+        "src": "/song7.mp3",
+        "cover": "/img7.jpg"
+      },
+      {
+        "id": 8,
+        "title": "Ocean Deep",
+        "artist": "Aqua Marine",
+        "album": "Blue World",
+        "src": "/song8.mp3",
+        "cover": "/img8.jpg"
+      },
+      {
+        "id": 9,
+        "title": "Desert Wind",
+        "artist": "Sandy Dunes",
+        "album": "Arid Land",
+        "src": "/song9.mp3",
+        "cover": "/img9.jpg"
+      },
+      {
+        "id": 10,
+        "title": "Forest Echo",
+        "artist": "Green Leaf",
+        "album": "Nature's Call",
+        "src": "/song10.mp3",
+        "cover": "/img10.jpg"
+      }
+    ]
+  }
+  
