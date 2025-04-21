@@ -6,7 +6,7 @@
         "artist": "Chill Wave",
         "album": "Beach Memories",
         "src": "/song1.mp3",
-        "cover": "/img1.jpg"
+        "cover": "/img26.jpg"
       },
       {
         "id": 2,
@@ -22,7 +22,7 @@
         "artist": "Acoustic Breeze",
         "album": "Quiet Moments",
         "src": "/song3.mp3",
-        "cover": "/img3.jpg"
+        "cover": "/img25.jpg"
       },
       {
         "id": 4,
@@ -38,7 +38,7 @@
         "artist": "Piano Soul",
         "album": "Weather Moods",
         "src": "/5.mp3",
-        "cover": "/img5.jpg"
+        "cover": "/img27.jpg"
       },
       {
         "id": 6,
@@ -54,7 +54,7 @@
         "artist": "Nature Sounds",
         "album": "Wilderness",
         "src": "/7.mp3",
-        "cover": "/img7.jpg"
+        "cover": "/img24.jpg"
       },
       {
         "id": 8,
