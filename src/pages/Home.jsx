@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+// pages/Home.jsx
+import React, { useState, useEffect } from "react";
+import MusicPlayer from "../components/MusicPlayer";
+import songsData from "../data/songs.json";
 
 const Home = () => {
   const [loading, setLoading] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState(songsData.songs[0]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(false);
 
   // Mock data
   const featuredPlaylists = Array(10)
@@ -98,6 +104,21 @@ const Home = () => {
       },
     }));
 
+  const handleTrackClick = (trackIndex) => {
+    const songs = songsData.songs;
+    // Find the corresponding song in our JSON data
+    const clickedTrack = topTracks[trackIndex];
+    const songIndex = songs.findIndex(
+      song => song.cover === clickedTrack.track.album.images[0].url
+    );
+    
+    if (songIndex !== -1) {
+      setCurrentTrack(songs[songIndex]);
+      setIsPlaying(true);
+      setShowPlayer(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12 flex items-center justify-center">
@@ -107,7 +128,7 @@ const Home = () => {
   }
 
   return (
-    <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12">
+    <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12 pb-32">
       <div className="max-w-[1800px] mx-auto">
         {/* Featured Charts Section */}
         <section className="mb-12">
@@ -217,6 +238,7 @@ const Home = () => {
               <div
                 key={index}
                 className="bg-gray-800 p-5 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex items-center gap-4"
+                onClick={() => handleTrackClick(index)}
               >
                 {item.track?.album?.images?.length > 0 ? (
                   <img
@@ -242,6 +264,16 @@ const Home = () => {
           </div>
         </section>
       </div>
+
+      {/* Music Player */}
+      {showPlayer && (
+        <MusicPlayer 
+          currentTrack={currentTrack} 
+          setCurrentTrack={setCurrentTrack}
+          isPlaying={isPlaying}
+          setIsPlaying={setIsPlaying}
+        />
+      )}
     </div>
   );
 };
