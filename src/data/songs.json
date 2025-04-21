@@ -1,85 +1,94 @@
 {
-    "songs": [
-      {
-        "id": 1,
-        "title": "Summer Vibes",
-        "artist": "Danial Levi",
-        "album": "Beach Memories",
-        "src": "/song1.mp3",
-        "cover": "/img26.jpg"
-      },
-      {
-        "id": 2,
-        "title": "Midnight Drive",
-        "artist": "Jigsaw",
-        "album": "City Lights",
-        "src": "/song2.mp3",
-        "cover": "/img2.jpg"
-      },
-      {
-        "id": 3,
-        "title": "Morning Coffee",
-        "artist": "Janji and Johnning",
-        "album": "Quiet Moments",
-        "src": "/song3.mp3",
-        "cover": "/img25.jpg"
-      },
-      {
-        "id": 4,
-        "title": "Shine",
-        "artist": "Spektrem",
-        "album": "Future Sounds",
-        "src": "/4.mp3",
-        "cover": "/img4.jpg"
-      },
-      {
-        "id": 5,
-        "title": "Rainy Day",
-        "artist": "Coleman Trap",
-        "album": "Weather Moods",
-        "src": "/5.mp3",
-        "cover": "/img27.jpg"
-      },
-      {
-        "id": 6,
-        "title": "Sunset Boulevard",
-        "artist": "Kelly Clarkson",
-        "album": "Metropolitan",
-        "src": "/2.mp3",
-        "cover": "/img6.jpg"
-      },
-      {
-        "id": 7,
-        "title": "Mountain High",
-        "artist": "Electro-Light",
-        "album": "Wilderness",
-        "src": "/7.mp3",
-        "cover": "/img24.jpg"
-      },
-      {
-        "id": 8,
-        "title": "Ocean Deep",
-        "artist": "Celine Dion",
-        "album": "Blue World",
-        "src": "/8.mp3",
-        "cover": "/image21.jpg"
-      },
-      {
-        "id": 9,
-        "title": "Desert Wind",
-        "artist": "Sandy Dunes",
-        "album": "Arid Land",
-        "src": "/9.mp3",
-        "cover": "/img22.jpg"
-      },
-      {
-        "id": 10,
-        "title": "Forest Echo",
-        "artist": "Syn Coal",
-        "album": "Nature's Call",
-        "src": "/10.mp3",
-        "cover": "/img23.jpg"
-      }
-    ]
-  }
-  
+  "songs": [
+    {
+      "id": 1,
+      "title": "Summer Vibes",
+      "artist": "Danial Levi",
+      "album": "Beach Memories",
+      "src": "/song1.mp3",
+      "cover": "/img26.jpg",
+      "duration": "3:28"
+    },
+    {
+      "id": 2,
+      "title": "Midnight Drive",
+      "artist": "Jigsaw",
+      "album": "City Lights",
+      "src": "/song2.mp3",
+      "cover": "/img2.jpg",
+      "duration": "3:58"
+    },
+    {
+      "id": 3,
+      "title": "Morning Coffee",
+      "artist": "Janji and Johnning",
+      "album": "Quiet Moments",
+      "src": "/song3.mp3",
+      "cover": "/img25.jpg",
+      "duration": "3:28"
+    },
+    {
+      "id": 4,
+      "title": "Shine",
+      "artist": "Spektrem",
+      "album": "Future Sounds",
+      "src": "/4.mp3",
+      "cover": "/img4.jpg",
+      "duration": "4:19"
+    },
+    {
+      "id": 5,
+      "title": "Rainy Day",
+      "artist": "Coleman Trap",
+      "album": "Weather Moods",
+      "src": "/5.mp3",
+      "cover": "/img27.jpg",
+      "duration": "3:33"
+    },
+    {
+      "id": 6,
+      "title": "Sunset Boulevard",
+      "artist": "Kelly Clarkson",
+      "album": "Metropolitan",
+      "src": "/2.mp3",
+      "cover": "/img6.jpg",
+      "duration": "4:33"
+    },
+    {
+      "id": 7,
+      "title": "Mountain High",
+      "artist": "Electro-Light",
+      "album": "Wilderness",
+      "src": "/7.mp3",
+      "cover": "/img24.jpg",
+      "duration": "4:51"
+    },
+    {
+      "id": 8,
+      "title": "Ocean Deep",
+      "artist": "Celine Dion",
+      "album": "Blue World",
+      "src": "/8.mp3",
+      "cover": "/image21.jpg",
+      "duration": "3:28"
+    },
+    {
+      "id": 9,
+      "title": "Desert Wind",
+      "artist": "Sandy Dunes",
+      "album": "Arid Land",
+      "src": "/9.mp3",
+      "cover": "/img22.jpg",
+      "duration": "4:27"
+    },
+    {
+      "id": 10,
+      "title": "Forest Echo",
+      "artist": "Syn Coal",
+      "album": "Nature's Call",
+      "src": "/10.mp3",
+      "cover": "/img23.jpg",
+      "duration": "3:01"
+    }
+  ]
+}

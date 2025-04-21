@@ -1,9 +1,8 @@
-// pages/Home.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import MusicPlayer from "../components/MusicPlayer";
 import ChartView from "../components/ChartView";
 import songsData from "../data/songs.json";
-import { FaPlay, FaPause } from "react-icons/fa";
+import { FaPlay, FaPause, FaBell, FaUserCircle, FaChevronDown } from "react-icons/fa";
 import { MdExplicit } from "react-icons/md";
 
 const Home = () => {
@@ -15,6 +14,8 @@ const Home = () => {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [currentlyHoveredTrack, setCurrentlyHoveredTrack] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   // Animation frames for the equalizer bars
   const animationFrames = [
@@ -33,7 +34,7 @@ const Home = () => {
 
     const interval = setInterval(() => {
       setAnimationStep(prev => (prev + 1) % animationFrames.length);
-    }, 300); // Adjust speed here (300ms matches Spotify's animation speed)
+    }, 300);
 
     return () => clearInterval(interval);
   }, [isPlaying, animationFrames.length]);
@@ -78,28 +79,29 @@ const Home = () => {
     },
   ];
 
-  // Format duration (ms) to MM:SS
-  const formatDuration = useCallback((ms) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-  }, []);
+  // Format duration string to milliseconds
+  const durationToMs = (durationString) => {
+    const [minutes, seconds] = durationString.split(':').map(Number);
+    return (minutes * 60 + seconds) * 1000;
+  };
 
-  // Top tracks data with formatted duration
-  const topTracks = songsData.songs.map((song, index) => ({
-    id: `track-${index}`,
-    track: {
-      name: song.title,
-      artists: [{ name: song.artist }],
-      album: {
-        name: song.album,
-        images: [{ url: song.cover }],
+  // Top tracks data with properly formatted duration
+  const topTracks = songsData.songs.map((song, index) => {
+    return {
+      id: `track-${index}`,
+      track: {
+        name: song.title,
+        artists: [{ name: song.artist }],
+        album: {
+          name: song.album,
+          images: [{ url: song.cover }],
+        },
+        duration_ms: durationToMs(song.duration),
+        duration_formatted: song.duration,
+        explicit: false,
       },
-      duration_ms: song.duration * 1000,
-      duration_formatted: formatDuration(song.duration * 1000),
-      explicit: song.explicit || false,
-    },
-  }));
+    };
+  });
 
   // Handle track click from top tracks section
   const handleTrackClick = useCallback((trackIndex) => {
@@ -155,6 +157,103 @@ const Home = () => {
 
   return (
     <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12 pb-32">
+      {/* Top Navigation Bar */}
+      <div className="flex justify-between items-center mb-8">
+        <div></div> {/* Empty div for spacing */}
+        <div className="flex items-center space-x-4">
+          {/* Notification Icon */}
+          <div className="relative">
+            <button 
+              className="text-gray-300 hover:text-white focus:outline-none"
+              onClick={() => {
+                setShowNotificationDropdown(!showNotificationDropdown);
+                setShowProfileDropdown(false);
+              }}
+            >
+              <FaBell className="text-xl" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                3
+              </span>
+            </button>
+            
+            {showNotificationDropdown && (
+              <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-md shadow-lg py-1 z-50">
+                <div className="px-4 py-2 border-b border-gray-700">
+                  <p className="text-white font-medium">Notifications</p>
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  {[1, 2, 3].map((item) => (
+                    <div key={item} className="px-4 py-3 hover:bg-gray-700 cursor-pointer">
+                      <p className="text-sm text-white">New release from your favorite artist</p>
+                      <p className="text-xs text-gray-400 mt-1">2 hours ago</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-4 py-2 border-t border-gray-700 text-center">
+                  <button className="text-sm text-green-500 hover:text-green-400">
+                    View all notifications
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Profile Dropdown */}
+          <div className="relative">
+            <button 
+              className="flex items-center space-x-2 text-gray-300 hover:text-white focus:outline-none"
+              onClick={() => {
+                setShowProfileDropdown(!showProfileDropdown);
+                setShowNotificationDropdown(false);
+              }}
+            >
+              <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+                <FaUserCircle className="text-xl" />
+              </div>
+              <span className="hidden md:inline-block">User</span>
+              <FaChevronDown className="hidden md:inline-block text-xs" />
+            </button>
+            
+            {showProfileDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50">
+                <div className="px-4 py-3 border-b border-gray-700">
+                  <p className="text-sm text-white">Signed in as</p>
+                  <p className="text-sm font-medium text-white truncate">user@example.com</p>
+                </div>
+                <div className="py-1">
+                  <a 
+                    href="#" 
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                  >
+                    Account Settings
+                  </a>
+                  <a 
+                    href="#" 
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                  >
+                    Upgrade to Premium
+                  </a>
+                  <a 
+                    href="#" 
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                  >
+                    Help
+                  </a>
+                </div>
+                <div className="py-1 border-t border-gray-700">
+                  <a 
+                    href="#" 
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                  >
+                    Log out
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {selectedChart ? (
         <ChartView 
           chart={selectedChart} 
