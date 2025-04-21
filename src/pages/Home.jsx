@@ -51,69 +51,17 @@ const Home = () => {
     },
   ];
 
-  // Top tracks data
-  const topTracks = [
-    {
-      track: {
-        name: "Summer Vibes",
-        artists: [{ name: "Chill Wave" }],
-        album: {
-          name: "Beach Memories",
-          images: [{ url: "/img1.jpg" }],
-        },
+  // Top tracks data - updated to match all songs in songsData
+  const topTracks = songsData.songs.map(song => ({
+    track: {
+      name: song.title,
+      artists: [{ name: song.artist }],
+      album: {
+        name: song.album,
+        images: [{ url: song.cover }],
       },
     },
-    {
-      track: {
-        name: "Midnight Drive",
-        artists: [{ name: "Night Rider" }],
-        album: {
-          name: "City Lights",
-          images: [{ url: "/img2.jpg" }],
-        },
-      },
-    },
-    {
-      track: {
-        name: "Morning Coffee",
-        artists: [{ name: "Acoustic Breeze" }],
-        album: {
-          name: "Quiet Moments",
-          images: [{ url: "/img3.jpg" }],
-        },
-      },
-    },
-    {
-      track: {
-        name: "Electric Dreams",
-        artists: [{ name: "Synth Master" }],
-        album: {
-          name: "Future Sounds",
-          images: [{ url: "/img4.jpg" }],
-        },
-      },
-    },
-    {
-      track: {
-        name: "Rainy Day",
-        artists: [{ name: "Piano Soul" }],
-        album: {
-          name: "Weather Moods",
-          images: [{ url: "/img5.jpg" }],
-        },
-      },
-    },
-    {
-      track: {
-        name: "Sunset Boulevard",
-        artists: [{ name: "Urban Jazz" }],
-        album: {
-          name: "Metropolitan",
-          images: [{ url: "/img6.jpg" }],
-        },
-      },
-    },
-  ];
+  }));
 
   // New releases data
   const newReleases = Array(12).fill().map((_, i) => ({
@@ -137,14 +85,8 @@ const Home = () => {
 
   // Handle track click from top tracks section
   const handleTrackClick = (trackIndex) => {
-    const songs = songsData.songs;
-    const clickedTrack = topTracks[trackIndex];
-    const songIndex = songs.findIndex(
-      song => song.cover === clickedTrack.track.album.images[0].url
-    );
-    
-    if (songIndex !== -1) {
-      setCurrentTrack(songs[songIndex]);
+    if (trackIndex >= 0 && trackIndex < songsData.songs.length) {
+      setCurrentTrack(songsData.songs[trackIndex]);
       setIsPlaying(true);
       setShowPlayer(true);
     }
@@ -162,7 +104,6 @@ const Home = () => {
 
   // Handle track click from chart view
   const handleChartTrackClick = (index) => {
-    // Cycle through the songs in the songsData array
     const songIndex = index % songsData.songs.length;
     setCurrentTrack(songsData.songs[songIndex]);
     setIsPlaying(true);
@@ -189,7 +130,7 @@ const Home = () => {
         <div className="max-w-[1800px] mx-auto">
           {/* Featured Charts Section */}
           <section className="mb-12">
-            <h2 className="text-3xl font-bold text-white mb-8">Featured Charts</h2>
+            <h2 className="text-3xl font-bold text-white mb-8">Playlists</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {featuredPlaylists.map((chart) => (
                 <div
@@ -215,7 +156,7 @@ const Home = () => {
 
           {/* Today's Biggest Hits Section */}
           <section className="mb-12">
-            <h2 className="text-3xl font-bold text-white mb-8">Today's biggest hits</h2>
+            <h2 className="text-3xl font-bold text-white mb-8">Songs</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {topTracks.map((item, index) => (
                 <div
@@ -246,9 +187,6 @@ const Home = () => {
               ))}
             </div>
           </section>
-
-       
-          
         </div>
       )}
 
