@@ -1,16 +1,24 @@
 import React from "react";
 import { FaPlay } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import singersData from "../data/singers.json";
 
 const Singers = () => {
+  const navigate = useNavigate();
+
+  const handleSingerClick = (singerId) => {
+    navigate(`/singer/${singerId}`);
+  };
+
   return (
     <div className="px-5 py-6 mx-4 my-5">
       <h2 className="text-white text-2xl mb-4 font-semibold">Popular Artists</h2>
       <div className="flex overflow-x-auto gap-5 py-3 scrollbar-hide">
-        {singersData.map((singer, index) => (
+        {singersData.map((singer) => (
           <div 
-            key={index} 
+            key={singer.id} 
             className="flex flex-col items-center min-w-[150px] transition-transform duration-300 hover:scale-105 cursor-pointer group"
+            onClick={() => handleSingerClick(singer.id)}
           >
             <div className="relative w-32 h-32 rounded-full overflow-hidden mb-3">
               <img

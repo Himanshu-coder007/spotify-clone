@@ -233,8 +233,6 @@ const Home = () => {
         </div>
       </div>
 
-      <Singers />
-
       <div className="max-w-[1800px] mx-auto space-y-12">
         {/* Featured Charts Section */}
         <section>
@@ -334,6 +332,9 @@ const Home = () => {
             </div>
           </div>
         </section>
+
+        {/* Popular Artists Section - Moved below Songs section */}
+        <Singers />
       </div>
 
       {/* Music Player */}
