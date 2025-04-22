@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import MusicPlayer from "../components/MusicPlayer";
 import songsData from "../data/songs.json";
@@ -10,6 +10,8 @@ import {
   FaChevronDown,
   FaCrown,
   FaMobileAlt,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import { MdExplicit } from "react-icons/md";
 import Singers from "../components/Singers";
@@ -26,6 +28,13 @@ const Home = () => {
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showLeftArrowPlaylists, setShowLeftArrowPlaylists] = useState(false);
+  const [showRightArrowPlaylists, setShowRightArrowPlaylists] = useState(true);
+  const [showLeftArrowSongs, setShowLeftArrowSongs] = useState(false);
+  const [showRightArrowSongs, setShowRightArrowSongs] = useState(true);
+
+  const playlistsRef = useRef(null);
+  const songsRef = useRef(null);
 
   // Animation frames for the equalizer bars
   const animationFrames = [
@@ -48,6 +57,61 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, [isPlaying, animationFrames.length]);
+
+  // Check scroll position for arrows
+  const checkScrollPosition = useCallback(() => {
+    if (playlistsRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = playlistsRef.current;
+      setShowLeftArrowPlaylists(scrollLeft > 0);
+      setShowRightArrowPlaylists(scrollLeft < scrollWidth - clientWidth);
+    }
+
+    if (songsRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = songsRef.current;
+      setShowLeftArrowSongs(scrollLeft > 0);
+      setShowRightArrowSongs(scrollLeft < scrollWidth - clientWidth);
+    }
+  }, []);
+
+  // Set up scroll event listeners
+  useEffect(() => {
+    const playlistsElement = playlistsRef.current;
+    const songsElement = songsRef.current;
+
+    if (playlistsElement) {
+      playlistsElement.addEventListener("scroll", checkScrollPosition);
+    }
+    if (songsElement) {
+      songsElement.addEventListener("scroll", checkScrollPosition);
+    }
+
+    // Initial check
+    checkScrollPosition();
+
+    return () => {
+      if (playlistsElement) {
+        playlistsElement.removeEventListener("scroll", checkScrollPosition);
+      }
+      if (songsElement) {
+        songsElement.removeEventListener("scroll", checkScrollPosition);
+      }
+    };
+  }, [checkScrollPosition]);
+
+  // Scroll handlers
+  const scrollPlaylists = (direction) => {
+    if (playlistsRef.current) {
+      const scrollAmount = direction === "left" ? -300 : 300;
+      playlistsRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
+  const scrollSongs = (direction) => {
+    if (songsRef.current) {
+      const scrollAmount = direction === "left" ? -300 : 300;
+      songsRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   // Featured charts data
   const featuredPlaylists = [
@@ -222,12 +286,24 @@ const Home = () => {
             </h2>
           </div>
           <div className="relative">
-            <div className="overflow-x-auto pb-4 scrollbar-hide">
+            {showLeftArrowPlaylists && (
+              <button
+                onClick={() => scrollPlaylists("left")}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
+                style={{ marginLeft: "-20px" }}
+              >
+                <FaChevronLeft className="text-gray-300 text-xl hover:text-white" />
+              </button>
+            )}
+            <div
+              ref={playlistsRef}
+              className="overflow-x-auto pb-4 scrollbar-hide"
+            >
               <div className="flex space-x-6 w-max">
                 {featuredPlaylists.map((chart) => (
                   <div
                     key={chart.id}
-                    className="bg-gray-800 p-5 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-64 relative"
+                    className="bg-gray-800 p-5 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-64 relative transform hover:scale-105 transition-transform ease-in-out duration-300"
                     onClick={() => handleChartClick(chart)}
                     onMouseEnter={() => setHoveredItem(`playlist-${chart.id}`)}
                     onMouseLeave={() => setHoveredItem(null)}
@@ -254,6 +330,15 @@ const Home = () => {
                 ))}
               </div>
             </div>
+            {showRightArrowPlaylists && (
+              <button
+                onClick={() => scrollPlaylists("right")}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
+                style={{ marginRight: "-20px" }}
+              >
+                <FaChevronRight className="text-gray-300 text-xl hover:text-white" />
+              </button>
+            )}
           </div>
         </section>
 
@@ -266,7 +351,19 @@ const Home = () => {
           </div>
 
           <div className="relative">
-            <div className="overflow-x-auto pb-4 scrollbar-hide">
+            {showLeftArrowSongs && (
+              <button
+                onClick={() => scrollSongs("left")}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
+                style={{ marginLeft: "-20px" }}
+              >
+                <FaChevronLeft className="text-gray-300 text-xl hover:text-white" />
+              </button>
+            )}
+            <div
+              ref={songsRef}
+              className="overflow-x-auto pb-4 scrollbar-hide"
+            >
               <div className="flex space-x-6 w-max">
                 {topTracks.map((item, index) => {
                   const isCurrentTrack =
@@ -277,7 +374,7 @@ const Home = () => {
                   return (
                     <div
                       key={index}
-                      className="bg-gray-800 p-4 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-48 relative"
+                      className="bg-gray-800 p-4 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-48 relative transform hover:scale-105 transition-transform ease-in-out duration-300"
                       onClick={() => handleTrackClick(index)}
                       onMouseEnter={() => setCurrentlyHoveredTrack(index)}
                       onMouseLeave={() => setCurrentlyHoveredTrack(null)}
@@ -325,6 +422,15 @@ const Home = () => {
                 })}
               </div>
             </div>
+            {showRightArrowSongs && (
+              <button
+                onClick={() => scrollSongs("right")}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
+                style={{ marginRight: "-20px" }}
+              >
+                <FaChevronRight className="text-gray-300 text-xl hover:text-white" />
+              </button>
+            )}
           </div>
         </section>
 
