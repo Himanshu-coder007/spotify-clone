@@ -1,9 +1,267 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FaPlay, FaChevronLeft } from 'react-icons/fa';
+import { MdExplicit } from 'react-icons/md';
+import MusicPlayer from '../components/MusicPlayer';
+import songsData from '../data/songs.json';
 
 const Playlist = () => {
-  return (
-    <div>Playlist</div>
-  )
-}
+  const { playlistId } = useParams();
+  const navigate = useNavigate();
+  const [playlist, setPlaylist] = useState(null);
+  const [currentTrack, setCurrentTrack] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState(null);
 
-export default Playlist
+  // Mock playlist data
+  const featuredPlaylists = [
+    {
+      id: "playlist-1",
+      name: "Top 50 Global",
+      description: "The most played tracks right now worldwide",
+      images: [{ url: "/img8.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-2",
+      name: "Top 50 India",
+      description: "The most played tracks right now in India",
+      images: [{ url: "/img9.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-3",
+      name: "Trending India",
+      description: "Trending tracks in India this week",
+      images: [{ url: "/img10.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-4",
+      name: "Trending Global",
+      description: "Trending tracks worldwide this week",
+      images: [{ url: "/img16.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-5",
+      name: "Mega Hits",
+      description: "All the biggest hits in one playlist",
+      images: [{ url: "/img11.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-6",
+      name: "Happy Favorites",
+      description: "Feel good favorites",
+      images: [{ url: "/img15.jpg" }],
+      tracks: { total: 50 },
+    },
+  ];
+
+  useEffect(() => {
+    // Find the playlist by ID
+    const foundPlaylist = featuredPlaylists.find(p => p.id === playlistId);
+    if (foundPlaylist) {
+      setPlaylist(foundPlaylist);
+    } else {
+      // Handle not found
+      navigate('/');
+    }
+  }, [playlistId, navigate]);
+
+  // Mock songs data for the playlist
+  const playlistSongs = songsData.songs.map((song, index) => ({
+    id: song.id,
+    title: song.title,
+    artist: song.artist,
+    album: playlist?.name || "Unknown Album",
+    duration: song.duration,
+    dateAdded: `${Math.floor(Math.random() * 30) + 1} days ago`,
+    cover: song.cover,
+    src: song.src
+  }));
+
+  const handleTrackClick = (index) => {
+    const song = playlistSongs[index];
+    setCurrentTrack({
+      id: song.id,
+      title: song.title,
+      artist: song.artist,
+      album: song.album,
+      cover: song.cover,
+      src: song.src,
+      duration: song.duration
+    });
+    setIsPlaying(true);
+    setShowPlayer(true);
+  };
+
+  const handlePlayAll = () => {
+    if (playlistSongs.length > 0) {
+      const firstSong = playlistSongs[0];
+      setCurrentTrack({
+        id: firstSong.id,
+        title: firstSong.title,
+        artist: firstSong.artist,
+        album: firstSong.album,
+        cover: firstSong.cover,
+        src: firstSong.src,
+        duration: firstSong.duration
+      });
+      setIsPlaying(true);
+      setShowPlayer(true);
+    }
+  };
+
+  if (!playlist) {
+    return <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12 flex items-center justify-center">
+      <div className="text-white text-2xl">Loading...</div>
+    </div>;
+  }
+
+  return (
+    <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Back button */}
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center text-gray-400 hover:text-white mb-8 transition-colors"
+        >
+          <FaChevronLeft className="mr-2" />
+          Back
+        </button>
+
+        {/* Playlist header */}
+        <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
+          <div className="relative">
+            <img 
+              src={playlist.images[0]?.url || "/default-playlist.jpg"} 
+              alt={playlist.name}
+              className="w-48 h-48 sm:w-64 sm:h-64 object-cover shadow-xl"
+              style={{ boxShadow: '0 4px 60px rgba(0,0,0,.5)' }}
+            />
+          </div>
+          <div>
+            <p className="text-white uppercase text-xs tracking-widest mb-2">Playlist</p>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">{playlist.name}</h1>
+            <p className="text-gray-400 text-sm sm:text-base">
+              {playlist.description || "A great collection of tracks"}
+            </p>
+            <div className="flex items-center mt-4 text-gray-400 text-sm">
+              <span className="font-bold text-white">Spotify</span>
+              <span className="mx-1">•</span>
+              <span>{playlistSongs.length} songs</span>
+              <span className="mx-1">•</span>
+              <span>about {Math.floor(playlistSongs.length * 3.5 / 60)} hr</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Play button */}
+        <div className="mb-8">
+          <button 
+            className="bg-green-500 hover:bg-green-400 transition-colors text-black rounded-full px-8 py-3 font-bold flex items-center"
+            onClick={handlePlayAll}
+          >
+            <FaPlay className="mr-2" />
+            Play
+          </button>
+        </div>
+
+        {/* Songs table */}
+        <div className="bg-gray-800 bg-opacity-40 rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead className="border-b border-gray-700">
+              <tr className="text-left text-gray-400 text-sm">
+                <th className="p-4 w-12 text-center">#</th>
+                <th className="p-4">Title</th>
+                <th className="p-4 hidden md:table-cell">Album</th>
+                <th className="p-4 hidden sm:table-cell">Date Added</th>
+                <th className="p-4 text-right">
+                  <svg className="w-5 h-5 inline" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                  </svg>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {playlistSongs.map((song, index) => {
+                const isCurrentTrackPlaying = currentTrack && currentTrack.id === song.id && isPlaying;
+                return (
+                  <tr 
+                    key={song.id} 
+                    className={`border-b border-gray-700 hover:bg-gray-700 transition-colors ${isCurrentTrackPlaying ? 'text-green-500' : 'text-white'}`}
+                    onMouseEnter={() => setHoveredRow(index)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                    onClick={() => handleTrackClick(index)}
+                  >
+                    <td className="p-4 text-center">
+                      {hoveredRow === index ? (
+                        <FaPlay className="mx-auto" />
+                      ) : isCurrentTrackPlaying ? (
+                        <div className="flex items-center justify-center h-5">
+                          <div className="flex space-x-1">
+                            <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">{index + 1}</span>
+                      )}
+                    </td>
+                    <td className="p-4 font-medium">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 mr-3 flex-shrink-0">
+                          <img 
+                            src={song.cover} 
+                            alt={song.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <div className={`${isCurrentTrackPlaying ? 'text-green-500' : 'text-white'}`}>
+                            {song.title}
+                            {song.explicit && <MdExplicit className="inline-block ml-1 text-gray-400" />}
+                          </div>
+                          <div className="text-gray-400 text-sm">{song.artist}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-gray-400 hidden md:table-cell">{song.album}</td>
+                    <td className="p-4 text-gray-400 hidden sm:table-cell">{song.dateAdded}</td>
+                    <td className="p-4 text-gray-400 text-right">
+                      {isCurrentTrackPlaying ? (
+                        <div className="inline-flex items-center">
+                          <div className="w-2 h-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
+                          <span>{song.duration}</span>
+                        </div>
+                      ) : (
+                        song.duration
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Music Player */}
+      {showPlayer && currentTrack && (
+        <MusicPlayer 
+          currentTrack={currentTrack} 
+          setCurrentTrack={setCurrentTrack}
+          isPlaying={isPlaying}
+          setIsPlaying={setIsPlaying}
+          onClose={() => setShowPlayer(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default Playlist;
