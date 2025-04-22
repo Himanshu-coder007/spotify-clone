@@ -4,6 +4,7 @@ import ChartView from "../components/ChartView";
 import songsData from "../data/songs.json";
 import { FaPlay, FaPause, FaBell, FaUserCircle, FaChevronDown, FaCrown, FaMobileAlt } from "react-icons/fa";
 import { MdExplicit } from "react-icons/md";
+import Singers from "../components/Singers"; // Import the Singers component
 
 const Home = () => {
   const [loading, setLoading] = useState(false);
@@ -265,6 +266,9 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* Add the Singers component here */}
+      <Singers />
 
       {selectedChart ? (
         <ChartView 

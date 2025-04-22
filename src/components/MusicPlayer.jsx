@@ -31,6 +31,27 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
     }
   }, [volume, isMuted]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Spacebar to play/pause
+      if (e.code === 'Space') {
+        e.preventDefault(); // Prevent default spacebar behavior (scrolling)
+        setIsPlaying(!isPlaying);
+      }
+      
+      // Ctrl+M to toggle mute
+      if (e.ctrlKey && e.code === 'KeyM') {
+        e.preventDefault();
+        setIsMuted(!isMuted);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPlaying, isMuted]);
+
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
@@ -161,7 +182,7 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
           </div>
         </div>
 
-        {/* Volume Control - Positioned lower than close button */}
+        {/* Volume Control */}
         <div className="flex items-center gap-2 w-full md:w-1/4 justify-end mt-8">
           <button 
             onClick={toggleMute} 
