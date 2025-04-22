@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import MusicPlayer from './MusicPlayer';
 import singerSongs from '../data/anirudhsongs.json';
+import singers from '../data/singers.json';
 
 const Singer = () => {
   const { singerId } = useParams();
@@ -10,14 +11,18 @@ const Singer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const [currentPlayingId, setCurrentPlayingId] = useState(null);
+  const [singer, setSinger] = useState(null);
 
   useEffect(() => {
-    // In a real app, you would fetch songs based on singerId
-    // For now, we'll use the static data
+    // Fetch singer data based on singerId
+    const selectedSinger = singers.find(s => s.id === singerId);
+    setSinger(selectedSinger);
+
+    // Format songs data
     const formattedSongs = singerSongs.map((song, index) => ({
       id: index,
       title: song.title,
-      artist: "Anirudh Ravichander", // Hardcoded for this example
+      artist: selectedSinger?.name || "Unknown Artist",
       album: song.album,
       duration: song.duration,
       src: song.song_path,
@@ -42,19 +47,23 @@ const Singer = () => {
     }
   };
 
+  if (!singer) {
+    return <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-green-900 to-black">Loading...</div>;
+  }
+
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-green-900 to-black">
       <div className="mb-8 flex items-end">
         <div className="mr-6">
           <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/d/d4/Anirudh_Ravichander_at_Audi_Ritz_Style_Awards_2017_%28cropped%29.jpg" 
-            alt="Anirudh Ravichander" 
+            src={singer.image} 
+            alt={singer.name} 
             className="w-48 h-48 object-cover shadow-2xl rounded-full"
           />
         </div>
         <div>
-          <p className="text-sm uppercase text-gray-300">Artist</p>
-          <h1 className="text-5xl font-bold mb-4 text-white">Anirudh Ravichander</h1>
+          <p className="text-sm uppercase text-gray-300">{singer.designation}</p>
+          <h1 className="text-5xl font-bold mb-4 text-white">{singer.name}</h1>
           <p className="text-gray-400">{songs.length} songs</p>
         </div>
       </div>
@@ -71,7 +80,7 @@ const Singer = () => {
               </svg>
             ) : (
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l3-2z" clipRule="evenodd" />
               </svg>
             )}
           </button>
