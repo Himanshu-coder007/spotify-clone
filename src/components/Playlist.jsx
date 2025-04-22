@@ -60,6 +60,16 @@ const Playlist = () => {
     },
   ];
 
+  // Playlist background color mapping
+  const playlistColors = {
+    "playlist-1": "#2a4365",
+    "playlist-2": "#22543d",
+    "playlist-3": "#742a2a",
+    "playlist-4": "#44337a",
+    "playlist-5": "#234e52",
+    "playlist-6": "#744210",
+  };
+
   useEffect(() => {
     // Find the playlist by ID
     const foundPlaylist = featuredPlaylists.find(p => p.id === playlistId);
@@ -121,8 +131,15 @@ const Playlist = () => {
     </div>;
   }
 
+  const playlistBackgroundColor = playlistColors[playlist.id] || "#000000";
+
   return (
-    <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-8">
+    <div 
+      className="flex-1 h-screen overflow-y-auto p-8"
+      style={{
+        background: `linear-gradient(180deg, ${playlistBackgroundColor} 0%, #000000 100%)`
+      }}
+    >
       <div className="max-w-6xl mx-auto">
         {/* Back button */}
         <button 
@@ -171,7 +188,7 @@ const Playlist = () => {
         </div>
 
         {/* Songs table */}
-        <div className="bg-gray-800 bg-opacity-40 rounded-lg overflow-hidden">
+        <div className="rounded-lg overflow-hidden">
           <table className="w-full">
             <thead className="border-b border-gray-700">
               <tr className="text-left text-gray-400 text-sm">
@@ -192,7 +209,7 @@ const Playlist = () => {
                 return (
                   <tr 
                     key={song.id} 
-                    className={`border-b border-gray-700 hover:bg-gray-700 transition-colors ${isCurrentTrackPlaying ? 'text-green-500' : 'text-white'}`}
+                    className={`border-b border-gray-700 hover:bg-gray-700 hover:bg-opacity-40 transition-colors ${isCurrentTrackPlaying ? 'text-green-500' : 'text-white'}`}
                     onMouseEnter={() => setHoveredRow(index)}
                     onMouseLeave={() => setHoveredRow(null)}
                     onClick={() => handleTrackClick(index)}
