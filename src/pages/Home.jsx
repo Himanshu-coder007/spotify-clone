@@ -2,7 +2,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import MusicPlayer from "../components/MusicPlayer";
 import songsData from "../data/songs.json";
-import { FaPlay, FaPause, FaBell, FaUserCircle, FaChevronDown, FaCrown, FaMobileAlt } from "react-icons/fa";
+import {
+  FaPlay,
+  FaPause,
+  FaBell,
+  FaUserCircle,
+  FaChevronDown,
+  FaCrown,
+  FaMobileAlt,
+} from "react-icons/fa";
 import { MdExplicit } from "react-icons/md";
 import Singers from "../components/Singers";
 
@@ -15,7 +23,8 @@ const Home = () => {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [currentlyHoveredTrack, setCurrentlyHoveredTrack] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] =
+    useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   // Animation frames for the equalizer bars
@@ -34,7 +43,7 @@ const Home = () => {
     }
 
     const interval = setInterval(() => {
-      setAnimationStep(prev => (prev + 1) % animationFrames.length);
+      setAnimationStep((prev) => (prev + 1) % animationFrames.length);
     }, 300);
 
     return () => clearInterval(interval);
@@ -81,7 +90,7 @@ const Home = () => {
   ];
 
   const durationToMs = (durationString) => {
-    const [minutes, seconds] = durationString.split(':').map(Number);
+    const [minutes, seconds] = durationString.split(":").map(Number);
     return (minutes * 60 + seconds) * 1000;
   };
 
@@ -110,17 +119,20 @@ const Home = () => {
     }
   }, []);
 
-  const handleChartClick = useCallback((chart) => {
-    navigate(`/playlist/${chart.id}`);
-  }, [navigate]);
+  const handleChartClick = useCallback(
+    (chart) => {
+      navigate(`/playlist/${chart.id}`);
+    },
+    [navigate]
+  );
 
   const EqualizerBars = useCallback(() => {
     const currentHeights = animationFrames[animationStep];
-    
+
     return (
       <div className="flex items-end h-4 space-x-0.5">
         {currentHeights.map((height, i) => (
-          <div 
+          <div
             key={i}
             className="w-0.5 bg-black rounded-sm transition-all duration-100 ease-in-out"
             style={{ height: `${height}px` }}
@@ -144,54 +156,8 @@ const Home = () => {
       <div className="flex justify-between items-center mb-8">
         <div></div>
         <div className="flex items-center space-x-4">
-          <button className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-green-400 to-green-600 hover:from-green-300 hover:to-green-500 text-black px-4 py-2 rounded-full transition-all duration-200 cursor-pointer">
-            <FaCrown />
-            <span className="font-medium">Explore Premium</span>
-          </button>
-          
-          <button className="hidden md:flex items-center space-x-2 bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-full transition-all duration-200 cursor-pointer">
-            <FaMobileAlt />
-            <span className="font-medium">Install App</span>
-          </button>
-          
           <div className="relative">
-            <button 
-              className="text-gray-300 hover:text-white focus:outline-none cursor-pointer"
-              onClick={() => {
-                setShowNotificationDropdown(!showNotificationDropdown);
-                setShowProfileDropdown(false);
-              }}
-            >
-              <FaBell className="text-xl" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                3
-              </span>
-            </button>
-            
-            {showNotificationDropdown && (
-              <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-md shadow-lg py-1 z-50">
-                <div className="px-4 py-2 border-b border-gray-700">
-                  <p className="text-white font-medium">Notifications</p>
-                </div>
-                <div className="max-h-60 overflow-y-auto">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="px-4 py-3 hover:bg-gray-700 cursor-pointer">
-                      <p className="text-sm text-white">New release from your favorite artist</p>
-                      <p className="text-xs text-gray-400 mt-1">2 hours ago</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="px-4 py-2 border-t border-gray-700 text-center">
-                  <button className="text-sm text-green-500 hover:text-green-400 cursor-pointer">
-                    View all notifications
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="relative">
-            <button 
+            <button
               className="flex items-center space-x-2 text-gray-300 hover:text-white focus:outline-none cursor-pointer"
               onClick={() => {
                 setShowProfileDropdown(!showProfileDropdown);
@@ -204,26 +170,40 @@ const Home = () => {
               <span className="hidden md:inline-block">User</span>
               <FaChevronDown className="hidden md:inline-block text-xs" />
             </button>
-            
+
             {showProfileDropdown && (
               <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50">
                 <div className="px-4 py-3 border-b border-gray-700">
                   <p className="text-sm text-white">Signed in as</p>
-                  <p className="text-sm font-medium text-white truncate">user@example.com</p>
+                  <p className="text-sm font-medium text-white truncate">
+                    user@example.com
+                  </p>
                 </div>
                 <div className="py-1">
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer">
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  >
                     Account Settings
                   </a>
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer">
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  >
                     Upgrade to Premium
                   </a>
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer">
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  >
                     Help
                   </a>
                 </div>
                 <div className="py-1 border-t border-gray-700">
-                  <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer">
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  >
                     Log out
                   </a>
                 </div>
@@ -237,7 +217,9 @@ const Home = () => {
         {/* Featured Charts Section */}
         <section>
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-white cursor-default">Playlists</h2>
+            <h2 className="text-3xl font-bold text-white cursor-default">
+              Playlists
+            </h2>
           </div>
           <div className="relative">
             <div className="overflow-x-auto pb-4 scrollbar-hide">
@@ -251,8 +233,8 @@ const Home = () => {
                     onMouseLeave={() => setHoveredItem(null)}
                   >
                     <div className="aspect-square w-full rounded-lg mb-5 group-hover:shadow-xl transition-shadow overflow-hidden relative">
-                      <img 
-                        src={chart.images[0].url} 
+                      <img
+                        src={chart.images[0].url}
                         alt={chart.name}
                         className="w-full h-full object-cover"
                       />
@@ -262,7 +244,9 @@ const Home = () => {
                         </div>
                       )}
                     </div>
-                    <h3 className="text-lg font-bold text-white truncate cursor-pointer">{chart.name}</h3>
+                    <h3 className="text-lg font-bold text-white truncate cursor-pointer">
+                      {chart.name}
+                    </h3>
                     <p className="text-md text-gray-400 mt-2 cursor-pointer">
                       {chart.tracks.total} tracks • Updated weekly
                     </p>
@@ -276,17 +260,20 @@ const Home = () => {
         {/* Songs Section */}
         <section>
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-white cursor-default">Songs</h2>
+            <h2 className="text-3xl font-bold text-white cursor-default">
+              Songs
+            </h2>
           </div>
-          
+
           <div className="relative">
             <div className="overflow-x-auto pb-4 scrollbar-hide">
               <div className="flex space-x-6 w-max">
                 {topTracks.map((item, index) => {
-                  const isCurrentTrack = currentTrack && 
-                    currentTrack.title === item.track.name && 
+                  const isCurrentTrack =
+                    currentTrack &&
+                    currentTrack.title === item.track.name &&
                     currentTrack.artist === item.track.artists[0].name;
-                  
+
                   return (
                     <div
                       key={index}
@@ -296,8 +283,8 @@ const Home = () => {
                       onMouseLeave={() => setCurrentlyHoveredTrack(null)}
                     >
                       <div className="aspect-square w-full rounded-lg mb-4 group-hover:shadow-xl transition-shadow overflow-hidden relative">
-                        <img 
-                          src={item.track.album.images[0].url} 
+                        <img
+                          src={item.track.album.images[0].url}
                           alt={item.track.name}
                           className="w-full h-full object-cover"
                         />
@@ -315,12 +302,20 @@ const Home = () => {
                           </div>
                         ) : null}
                       </div>
-                      <h3 className={`text-md font-bold text-white truncate ${isCurrentTrack ? 'text-green-500' : ''} cursor-pointer`}>
+                      <h3
+                        className={`text-md font-bold text-white truncate ${
+                          isCurrentTrack ? "text-green-500" : ""
+                        } cursor-pointer`}
+                      >
                         {item.track.name}
-                        {item.track.explicit && <MdExplicit className="inline-block ml-1 text-gray-400" />}
+                        {item.track.explicit && (
+                          <MdExplicit className="inline-block ml-1 text-gray-400" />
+                        )}
                       </h3>
                       <p className="text-sm text-gray-400 mt-1 truncate cursor-pointer">
-                        {item.track.artists.map((artist) => artist.name).join(", ")}
+                        {item.track.artists
+                          .map((artist) => artist.name)
+                          .join(", ")}
                       </p>
                       <p className="text-xs text-gray-500 mt-2 cursor-pointer">
                         {item.track.duration_formatted}
@@ -339,8 +334,8 @@ const Home = () => {
 
       {/* Music Player */}
       {showPlayer && (
-        <MusicPlayer 
-          currentTrack={currentTrack} 
+        <MusicPlayer
+          currentTrack={currentTrack}
           setCurrentTrack={setCurrentTrack}
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}

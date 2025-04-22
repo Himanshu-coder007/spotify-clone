@@ -4,7 +4,7 @@ import MusicPlayer from './MusicPlayer';
 import anirudhSongs from '../data/anirudhsongs.json';
 import arijitSongs from '../data/arijitsongs.json';
 import singers from '../data/singers.json';
-import { FaPlay } from 'react-icons/fa';
+import { FaPlay, FaPause } from 'react-icons/fa';
 
 const Singer = () => {
   const { singerId } = useParams();
@@ -14,6 +14,7 @@ const Singer = () => {
   const [showPlayer, setShowPlayer] = useState(false);
   const [currentPlayingId, setCurrentPlayingId] = useState(null);
   const [singer, setSinger] = useState(null);
+  const [isPlayAllActive, setIsPlayAllActive] = useState(false);
 
   useEffect(() => {
     const selectedSinger = singers.find(s => s.id === singerId);
@@ -47,9 +48,11 @@ const Singer = () => {
 
     if (currentTrack && currentTrack.id === song.id) {
       setIsPlaying(!isPlaying);
+      setIsPlayAllActive(!isPlaying);
     } else {
       setCurrentTrack(song);
       setIsPlaying(true);
+      setIsPlayAllActive(true);
       setCurrentPlayingId(song.id);
     }
     setShowPlayer(true);
@@ -57,8 +60,16 @@ const Singer = () => {
 
   const handlePlayAll = () => {
     if (songs.length > 0) {
-      const firstPlayableSong = songs.find(song => song.src) || songs[0];
-      handleSongClick(firstPlayableSong);
+      if (isPlayAllActive && isPlaying) {
+        // If currently playing and play all is active, pause
+        setIsPlaying(false);
+        setIsPlayAllActive(false);
+      } else {
+        // Otherwise, play the first song
+        const firstPlayableSong = songs.find(song => song.src) || songs[0];
+        handleSongClick(firstPlayableSong);
+        setIsPlayAllActive(true);
+      }
     }
   };
 
@@ -90,9 +101,13 @@ const Singer = () => {
             onClick={handlePlayAll}
             disabled={songs.length === 0}
           >
-            <FaPlay className="h-5 w-5" />
+            {isPlayAllActive && isPlaying ? (
+              <FaPause className="h-5 w-5" />
+            ) : (
+              <FaPlay className="h-5 w-5" />
+            )}
           </button>
-          <span className="text-white">Play All</span>
+          
         </div>
 
         <div className="text-gray-400 border-b border-gray-800 pb-2 mb-4 grid grid-cols-12">
@@ -171,6 +186,7 @@ const Singer = () => {
           onClose={() => setShowPlayer(false)}
           songs={songs}
           setCurrentPlayingId={setCurrentPlayingId}
+          setIsPlayAllActive={setIsPlayAllActive}
         />
       )}
     </div>
