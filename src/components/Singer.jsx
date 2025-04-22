@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import MusicPlayer from './MusicPlayer';
-import singerSongs from '../data/anirudhsongs.json';
+import anirudhSongs from '../data/anirudhsongs.json';
+import arijitSongs from '../data/arijitsongs.json';
 import singers from '../data/singers.json';
+import { FaPlay } from 'react-icons/fa';
 
 const Singer = () => {
   const { singerId } = useParams();
@@ -14,36 +16,49 @@ const Singer = () => {
   const [singer, setSinger] = useState(null);
 
   useEffect(() => {
-    // Fetch singer data based on singerId
     const selectedSinger = singers.find(s => s.id === singerId);
     setSinger(selectedSinger);
 
-    // Format songs data
-    const formattedSongs = singerSongs.map((song, index) => ({
-      id: index,
-      title: song.title,
+    let songsData = [];
+    if (singerId === '1') {
+      songsData = arijitSongs.songs || arijitSongs || [];
+    } else {
+      songsData = anirudhSongs.songs || anirudhSongs || [];
+    }
+
+    const formattedSongs = songsData.map((song, index) => ({
+      id: song.id || index,
+      title: song.title || song.name || "Unknown Track",
       artist: selectedSinger?.name || "Unknown Artist",
-      album: song.album,
-      duration: song.duration,
-      src: song.song_path,
-      cover: song.image_url
+      album: song.album || "Unknown Album",
+      duration: song.duration || "3:30",
+      src: song.src || song.song_path || song.audio_url || "",
+      cover: song.cover || song.image_url || song.image || selectedSinger?.image || ""
     }));
-    
+
     setSongs(formattedSongs);
   }, [singerId]);
 
   const handleSongClick = (song) => {
-    setCurrentTrack(song);
-    setIsPlaying(true);
-    setShowPlayer(true);
-    setCurrentPlayingId(song.id);
-  };
+    if (!song.src) {
+      console.error("No audio source available for this song:", song.title);
+      return;
+    }
 
-  const handlePlayPause = (song) => {
     if (currentTrack && currentTrack.id === song.id) {
       setIsPlaying(!isPlaying);
     } else {
-      handleSongClick(song);
+      setCurrentTrack(song);
+      setIsPlaying(true);
+      setCurrentPlayingId(song.id);
+    }
+    setShowPlayer(true);
+  };
+
+  const handlePlayAll = () => {
+    if (songs.length > 0) {
+      const firstPlayableSong = songs.find(song => song.src) || songs[0];
+      handleSongClick(firstPlayableSong);
     }
   };
 
@@ -71,19 +86,13 @@ const Singer = () => {
       <div className="mb-8">
         <div className="flex items-center space-x-4 mb-6">
           <button 
-            className="bg-green-500 text-black rounded-full p-3 hover:bg-green-400 transition-colors"
-            onClick={() => currentTrack && handlePlayPause(currentTrack)}
+            className="bg-green-500 text-black rounded-full p-3 hover:bg-green-400 transition-colors duration-200"
+            onClick={handlePlayAll}
+            disabled={songs.length === 0}
           >
-            {isPlaying ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l3-2z" clipRule="evenodd" />
-              </svg>
-            )}
+            <FaPlay className="h-5 w-5" />
           </button>
+          <span className="text-white">Play All</span>
         </div>
 
         <div className="text-gray-400 border-b border-gray-800 pb-2 mb-4 grid grid-cols-12">
@@ -93,40 +102,64 @@ const Singer = () => {
           <div className="col-span-2 text-right">DURATION</div>
         </div>
 
-        {songs.map((song, index) => (
-          <div 
-            key={song.id} 
-            className={`grid grid-cols-12 items-center py-3 px-2 rounded hover:bg-gray-800 ${currentPlayingId === song.id ? 'bg-gray-800' : ''}`}
-            onClick={() => handlePlayPause(song)}
-          >
-            <div className="col-span-1 text-gray-400 text-right pr-4">
-              {currentPlayingId === song.id && isPlaying ? (
-                <div className="flex items-center justify-center h-5 space-x-1">
-                  <div className="w-1 h-2 bg-green-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '100ms' }}></div>
-                  <div className="w-1 h-4 bg-green-500 animate-bounce" style={{ animationDelay: '200ms' }}></div>
-                  <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  <div className="w-1 h-2 bg-green-500 animate-bounce" style={{ animationDelay: '400ms' }}></div>
+        {songs.length > 0 ? (
+          songs.map((song, index) => (
+            <div 
+              key={song.id} 
+              className={`grid grid-cols-12 items-center py-3 px-2 rounded group hover:bg-gray-800/50 transition-colors duration-200 cursor-pointer ${
+                currentPlayingId === song.id ? 'bg-gray-800/70' : ''
+              }`}
+              onClick={() => handleSongClick(song)}
+            >
+              <div className="col-span-1 text-gray-400 flex items-center justify-center">
+                {currentPlayingId === song.id && isPlaying ? (
+                  <div className="flex items-center justify-center h-5 space-x-1">
+                    <div className="w-1 h-2 bg-green-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '100ms' }}></div>
+                    <div className="w-1 h-4 bg-green-500 animate-bounce" style={{ animationDelay: '200ms' }}></div>
+                    <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-1 h-2 bg-green-500 animate-bounce" style={{ animationDelay: '400ms' }}></div>
+                  </div>
+                ) : (
+                  <div className="group-hover:hidden">{index + 1}</div>
+                )}
+                <div className="hidden group-hover:block">
+                  {currentPlayingId !== song.id && (
+                    <FaPlay className="text-white h-4 w-4" />
+                  )}
+                  {currentPlayingId === song.id && !isPlaying && (
+                    <FaPlay className="text-green-500 h-4 w-4" />
+                  )}
                 </div>
-              ) : (
-                index + 1
-              )}
-            </div>
-            <div className="col-span-5 flex items-center">
-              <img 
-                src={song.cover} 
-                alt={song.title} 
-                className="w-10 h-10 mr-3"
-              />
-              <div>
-                <p className={`font-medium ${currentPlayingId === song.id ? 'text-green-500' : 'text-white'}`}>{song.title}</p>
-                <p className="text-sm text-gray-400">{song.artist}</p>
               </div>
+              <div className="col-span-5 flex items-center">
+                <img 
+                  src={song.cover} 
+                  alt={song.title} 
+                  className="w-10 h-10 mr-3 rounded"
+                  onError={(e) => {
+                    e.target.src = singer.image;
+                    e.target.onerror = null;
+                  }}
+                />
+                <div>
+                  <p className={`font-medium ${
+                    currentPlayingId === song.id ? 'text-green-500' : 'text-white'
+                  }`}>
+                    {song.title}
+                  </p>
+                  <p className="text-sm text-gray-400">{song.artist}</p>
+                </div>
+              </div>
+              <div className="col-span-4 text-gray-400">{song.album}</div>
+              <div className="col-span-2 text-right text-gray-400">{song.duration}</div>
             </div>
-            <div className="col-span-4 text-gray-400">{song.album}</div>
-            <div className="col-span-2 text-right text-gray-400">{song.duration}</div>
+          ))
+        ) : (
+          <div className="col-span-12 text-center py-8 text-gray-400">
+            No songs found for this artist
           </div>
-        ))}
+        )}
       </div>
 
       {showPlayer && currentTrack && (
