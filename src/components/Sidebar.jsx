@@ -18,8 +18,13 @@ const Sidebar = () => {
     <div className="w-[360px] h-screen flex flex-col bg-black border-r border-gray-800 overflow-hidden">
       {/* Fixed top section */}
       <div className="p-6 pb-0 flex-shrink-0">
-        {/* Logo */}
-        <div className="mb-8 pl-4">
+        {/* Logo with text */}
+        <div className="mb-8 pl-4 flex items-center">
+          <img 
+            src="/spotify_logo.png" 
+            alt="Spotify" 
+            className="h-10 object-contain mr-4" 
+          />
           <h1 className="text-2xl font-bold text-white">Spotify</h1>
         </div>
 
