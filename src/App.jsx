@@ -8,6 +8,8 @@ import Singer from './components/Singer';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import CreatePlaylist from './components/CreatePlaylist';
+import PlaylistView from './components/PlaylistView';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -33,6 +35,8 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/playlist/:playlistId" element={<Playlist />} />
               <Route path="/singer/:singerId" element={<Singer />} />
+              <Route path="/create-playlist" element={<CreatePlaylist />} />
+              <Route path="/savedplaylist/:id" element={<PlaylistView />} />
             </Route>
           </Routes>
         </div>

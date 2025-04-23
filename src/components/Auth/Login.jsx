@@ -17,6 +17,8 @@ const Login = ({ setIsAuthenticated }) => {
     
     if (user && user.password === password) {
       localStorage.setItem('isAuthenticated', 'true');
+      // Store user email in currentuser collection
+      localStorage.setItem('currentuser', JSON.stringify({ email }));
       setIsAuthenticated(true);
       toast.success('Logged in successfully!');
       navigate('/');
