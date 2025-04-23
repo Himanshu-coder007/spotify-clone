@@ -27,8 +27,7 @@ const Home = () => {
   const [hoveredPlaylist, setHoveredPlaylist] = useState(null);
   const [hoveredSong, setHoveredSong] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
-  const [showNotificationDropdown, setShowNotificationDropdown] =
-    useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showLeftArrowPlaylists, setShowLeftArrowPlaylists] = useState(false);
   const [showRightArrowPlaylists, setShowRightArrowPlaylists] = useState(true);
@@ -116,7 +115,7 @@ const Home = () => {
         songsElement.removeEventListener("scroll", checkScrollPosition);
       }
     };
-  }, [checkScrollPosition]);
+  }, [checkScrollPosition, activeFilter]); // Added activeFilter to dependencies
 
   // Scroll handlers
   const scrollPlaylists = (direction) => {
@@ -196,17 +195,13 @@ const Home = () => {
   });
 
   // Filter playlists and songs based on active filter
-  const filteredPlaylists =
-    activeFilter === "liked"
-      ? featuredPlaylists.filter((playlist) =>
-          likedItems.playlists.includes(playlist.id)
-        )
-      : featuredPlaylists;
+  const filteredPlaylists = activeFilter === "liked" 
+    ? featuredPlaylists.filter(playlist => likedItems.playlists.includes(playlist.id))
+    : featuredPlaylists;
 
-  const filteredSongs =
-    activeFilter === "liked"
-      ? topTracks.filter((song) => likedItems.songs.includes(song.id))
-      : topTracks;
+  const filteredSongs = activeFilter === "liked"
+    ? topTracks.filter(song => likedItems.songs.includes(song.id))
+    : topTracks;
 
   const handleTrackClick = useCallback((trackIndex) => {
     if (trackIndex >= 0 && trackIndex < songsData.songs.length) {
@@ -325,6 +320,34 @@ const Home = () => {
                     user@example.com
                   </p>
                 </div>
+                <div className="py-1">
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  >
+                    Account Settings
+                  </a>
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  >
+                    Upgrade to Premium
+                  </a>
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  >
+                    Help
+                  </a>
+                </div>
+                <div className="py-1 border-t border-gray-700">
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
+                  >
+                    Log out
+                  </a>
+                </div>
               </div>
             )}
           </div>
@@ -341,7 +364,7 @@ const Home = () => {
               </h2>
             </div>
             <div className="relative">
-              {showLeftArrowPlaylists && (
+              {showLeftArrowPlaylists && activeFilter === "all" && (
                 <button
                   onClick={() => scrollPlaylists("left")}
                   className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
@@ -397,7 +420,7 @@ const Home = () => {
                   ))}
                 </div>
               </div>
-              {showRightArrowPlaylists && (
+              {showRightArrowPlaylists && activeFilter === "all" && (
                 <button
                   onClick={() => scrollPlaylists("right")}
                   className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
@@ -420,7 +443,7 @@ const Home = () => {
             </div>
 
             <div className="relative">
-              {showLeftArrowSongs && (
+              {showLeftArrowSongs && activeFilter === "all" && (
                 <button
                   onClick={() => scrollSongs("left")}
                   className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
@@ -503,7 +526,7 @@ const Home = () => {
                   })}
                 </div>
               </div>
-              {showRightArrowSongs && (
+              {showRightArrowSongs && activeFilter === "all" && (
                 <button
                   onClick={() => scrollSongs("right")}
                   className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
