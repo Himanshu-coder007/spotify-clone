@@ -12,6 +12,8 @@ import {
   FaMobileAlt,
   FaChevronLeft,
   FaChevronRight,
+  FaHeart,
+  FaRegHeart,
 } from "react-icons/fa";
 import { MdExplicit } from "react-icons/md";
 import Singers from "../components/Singers";
@@ -22,19 +24,35 @@ const Home = () => {
   const [currentTrack, setCurrentTrack] = useState(songsData.songs[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
-  const [hoveredItem, setHoveredItem] = useState(null);
-  const [currentlyHoveredTrack, setCurrentlyHoveredTrack] = useState(null);
+  const [hoveredPlaylist, setHoveredPlaylist] = useState(null);
+  const [hoveredSong, setHoveredSong] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
-  const [showNotificationDropdown, setShowNotificationDropdown] =
-    useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showLeftArrowPlaylists, setShowLeftArrowPlaylists] = useState(false);
   const [showRightArrowPlaylists, setShowRightArrowPlaylists] = useState(true);
   const [showLeftArrowSongs, setShowLeftArrowSongs] = useState(false);
   const [showRightArrowSongs, setShowRightArrowSongs] = useState(true);
+  const [likedItems, setLikedItems] = useState({
+    playlists: [],
+    songs: [],
+  });
 
   const playlistsRef = useRef(null);
   const songsRef = useRef(null);
+
+  // Load liked items from localStorage on component mount
+  useEffect(() => {
+    const storedLikes = localStorage.getItem("musicAppLikes");
+    if (storedLikes) {
+      setLikedItems(JSON.parse(storedLikes));
+    }
+  }, []);
+
+  // Save liked items to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("musicAppLikes", JSON.stringify(likedItems));
+  }, [likedItems]);
 
   // Animation frames for the equalizer bars
   const animationFrames = [
@@ -160,7 +178,7 @@ const Home = () => {
 
   const topTracks = songsData.songs.map((song, index) => {
     return {
-      id: `track-${index}`,
+      id: `song-${index}`,
       track: {
         name: song.title,
         artists: [{ name: song.artist }],
@@ -189,6 +207,34 @@ const Home = () => {
     },
     [navigate]
   );
+
+  // Toggle like for a playlist
+  const togglePlaylistLike = (playlistId, e) => {
+    e.stopPropagation();
+    setLikedItems((prev) => {
+      const isLiked = prev.playlists.includes(playlistId);
+      return {
+        ...prev,
+        playlists: isLiked
+          ? prev.playlists.filter((id) => id !== playlistId)
+          : [...prev.playlists, playlistId],
+      };
+    });
+  };
+
+  // Toggle like for a song
+  const toggleSongLike = (songId, e) => {
+    e.stopPropagation();
+    setLikedItems((prev) => {
+      const isLiked = prev.songs.includes(songId);
+      return {
+        ...prev,
+        songs: isLiked
+          ? prev.songs.filter((id) => id !== songId)
+          : [...prev.songs, songId],
+      };
+    });
+  };
 
   const EqualizerBars = useCallback(() => {
     const currentHeights = animationFrames[animationStep];
@@ -305,8 +351,8 @@ const Home = () => {
                     key={chart.id}
                     className="bg-gray-800 p-5 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-64 relative transform hover:scale-105 transition-transform ease-in-out duration-300"
                     onClick={() => handleChartClick(chart)}
-                    onMouseEnter={() => setHoveredItem(`playlist-${chart.id}`)}
-                    onMouseLeave={() => setHoveredItem(null)}
+                    onMouseEnter={() => setHoveredPlaylist(chart.id)}
+                    onMouseLeave={() => setHoveredPlaylist(null)}
                   >
                     <div className="aspect-square w-full rounded-lg mb-5 group-hover:shadow-xl transition-shadow overflow-hidden relative">
                       <img
@@ -314,7 +360,19 @@ const Home = () => {
                         alt={chart.name}
                         className="w-full h-full object-cover"
                       />
-                      {hoveredItem === `playlist-${chart.id}` && (
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button
+                          onClick={(e) => togglePlaylistLike(chart.id, e)}
+                          className="p-2 bg-black bg-opacity-60 rounded-full hover:bg-opacity-80 transition-all"
+                        >
+                          {likedItems.playlists.includes(chart.id) ? (
+                            <FaHeart className="text-red-500 text-lg" />
+                          ) : (
+                            <FaRegHeart className="text-white text-lg" />
+                          )}
+                        </button>
+                      </div>
+                      {hoveredPlaylist === chart.id && (
                         <div className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl hover:scale-105 transform cursor-pointer">
                           <FaPlay className="text-black ml-1" />
                         </div>
@@ -370,14 +428,15 @@ const Home = () => {
                     currentTrack &&
                     currentTrack.title === item.track.name &&
                     currentTrack.artist === item.track.artists[0].name;
+                  const songId = `song-${index}`;
 
                   return (
                     <div
                       key={index}
                       className="bg-gray-800 p-4 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-48 relative transform hover:scale-105 transition-transform ease-in-out duration-300"
                       onClick={() => handleTrackClick(index)}
-                      onMouseEnter={() => setCurrentlyHoveredTrack(index)}
-                      onMouseLeave={() => setCurrentlyHoveredTrack(null)}
+                      onMouseEnter={() => setHoveredSong(index)}
+                      onMouseLeave={() => setHoveredSong(null)}
                     >
                       <div className="aspect-square w-full rounded-lg mb-4 group-hover:shadow-xl transition-shadow overflow-hidden relative">
                         <img
@@ -385,19 +444,30 @@ const Home = () => {
                           alt={item.track.name}
                           className="w-full h-full object-cover"
                         />
-                        {currentlyHoveredTrack === index ? (
-                          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center cursor-pointer">
-                            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transform transition-transform cursor-pointer">
-                              <FaPlay className="text-black ml-1" />
-                            </div>
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <button
+                            onClick={(e) => toggleSongLike(songId, e)}
+                            className="p-2 bg-black bg-opacity-60 rounded-full hover:bg-opacity-80 transition-all"
+                          >
+                            {likedItems.songs.includes(songId) ? (
+                              <FaHeart className="text-red-500 text-lg" />
+                            ) : (
+                              <FaRegHeart className="text-white text-lg" />
+                            )}
+                          </button>
+                        </div>
+                        {hoveredSong === index && (
+                          <div className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl hover:scale-105 transform cursor-pointer">
+                            <FaPlay className="text-black ml-1" />
                           </div>
-                        ) : isCurrentTrack && isPlaying ? (
+                        )}
+                        {isCurrentTrack && isPlaying && (
                           <div className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl cursor-pointer">
                             <div className="flex items-center justify-center w-full h-4">
                               <EqualizerBars />
                             </div>
                           </div>
-                        ) : null}
+                        )}
                       </div>
                       <h3
                         className={`text-md font-bold text-white truncate ${
@@ -434,7 +504,7 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Popular Artists Section - Moved below Songs section */}
+        {/* Popular Artists Section */}
         <Singers />
       </div>
 
