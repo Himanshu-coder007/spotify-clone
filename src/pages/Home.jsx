@@ -27,7 +27,8 @@ const Home = () => {
   const [hoveredPlaylist, setHoveredPlaylist] = useState(null);
   const [hoveredSong, setHoveredSong] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] =
+    useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showLeftArrowPlaylists, setShowLeftArrowPlaylists] = useState(false);
   const [showRightArrowPlaylists, setShowRightArrowPlaylists] = useState(true);
@@ -37,6 +38,7 @@ const Home = () => {
     playlists: [],
     songs: [],
   });
+  const [activeFilter, setActiveFilter] = useState("all"); // 'all' or 'liked'
 
   const playlistsRef = useRef(null);
   const songsRef = useRef(null);
@@ -193,6 +195,19 @@ const Home = () => {
     };
   });
 
+  // Filter playlists and songs based on active filter
+  const filteredPlaylists =
+    activeFilter === "liked"
+      ? featuredPlaylists.filter((playlist) =>
+          likedItems.playlists.includes(playlist.id)
+        )
+      : featuredPlaylists;
+
+  const filteredSongs =
+    activeFilter === "liked"
+      ? topTracks.filter((song) => likedItems.songs.includes(song.id))
+      : topTracks;
+
   const handleTrackClick = useCallback((trackIndex) => {
     if (trackIndex >= 0 && trackIndex < songsData.songs.length) {
       setCurrentTrack(songsData.songs[trackIndex]);
@@ -264,7 +279,28 @@ const Home = () => {
     <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12 pb-32">
       {/* Top Navigation Bar */}
       <div className="flex justify-between items-center mb-8">
-        <div></div>
+        <div className="flex space-x-4">
+          <button
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              activeFilter === "all"
+                ? "bg-white text-black"
+                : "bg-gray-800 text-white hover:bg-gray-700"
+            }`}
+            onClick={() => setActiveFilter("all")}
+          >
+            All
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              activeFilter === "liked"
+                ? "bg-white text-black"
+                : "bg-gray-800 text-white hover:bg-gray-700"
+            }`}
+            onClick={() => setActiveFilter("liked")}
+          >
+            Liked
+          </button>
+        </div>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <button
@@ -289,34 +325,6 @@ const Home = () => {
                     user@example.com
                   </p>
                 </div>
-                <div className="py-1">
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  >
-                    Account Settings
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  >
-                    Upgrade to Premium
-                  </a>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  >
-                    Help
-                  </a>
-                </div>
-                <div className="py-1 border-t border-gray-700">
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  >
-                    Log out
-                  </a>
-                </div>
               </div>
             )}
           </div>
@@ -325,187 +333,191 @@ const Home = () => {
 
       <div className="max-w-[1800px] mx-auto space-y-12">
         {/* Featured Charts Section */}
-        <section>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-white cursor-default">
-              Playlists
-            </h2>
-          </div>
-          <div className="relative">
-            {showLeftArrowPlaylists && (
-              <button
-                onClick={() => scrollPlaylists("left")}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
-                style={{ marginLeft: "-20px" }}
-              >
-                <FaChevronLeft className="text-gray-300 text-xl hover:text-white" />
-              </button>
-            )}
-            <div
-              ref={playlistsRef}
-              className="overflow-x-auto pb-4 scrollbar-hide"
-            >
-              <div className="flex space-x-6 w-max">
-                {featuredPlaylists.map((chart) => (
-                  <div
-                    key={chart.id}
-                    className="bg-gray-800 p-5 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-64 relative transform hover:scale-105 transition-transform ease-in-out duration-300"
-                    onClick={() => handleChartClick(chart)}
-                    onMouseEnter={() => setHoveredPlaylist(chart.id)}
-                    onMouseLeave={() => setHoveredPlaylist(null)}
-                  >
-                    <div className="aspect-square w-full rounded-lg mb-5 group-hover:shadow-xl transition-shadow overflow-hidden relative">
-                      <img
-                        src={chart.images[0].url}
-                        alt={chart.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button
-                          onClick={(e) => togglePlaylistLike(chart.id, e)}
-                          className="p-2 bg-black bg-opacity-60 rounded-full hover:bg-opacity-80 transition-all"
-                        >
-                          {likedItems.playlists.includes(chart.id) ? (
-                            <FaHeart className="text-red-500 text-lg" />
-                          ) : (
-                            <FaRegHeart className="text-white text-lg" />
-                          )}
-                        </button>
-                      </div>
-                      {hoveredPlaylist === chart.id && (
-                        <div className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl hover:scale-105 transform cursor-pointer">
-                          <FaPlay className="text-black ml-1" />
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-bold text-white truncate cursor-pointer">
-                      {chart.name}
-                    </h3>
-                    <p className="text-md text-gray-400 mt-2 cursor-pointer">
-                      {chart.tracks.total} tracks • Updated weekly
-                    </p>
-                  </div>
-                ))}
-              </div>
+        {filteredPlaylists.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-white cursor-default">
+                Playlists
+              </h2>
             </div>
-            {showRightArrowPlaylists && (
-              <button
-                onClick={() => scrollPlaylists("right")}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
-                style={{ marginRight: "-20px" }}
+            <div className="relative">
+              {showLeftArrowPlaylists && (
+                <button
+                  onClick={() => scrollPlaylists("left")}
+                  className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
+                  style={{ marginLeft: "-20px" }}
+                >
+                  <FaChevronLeft className="text-gray-300 text-xl hover:text-white" />
+                </button>
+              )}
+              <div
+                ref={playlistsRef}
+                className="overflow-x-auto pb-4 scrollbar-hide"
               >
-                <FaChevronRight className="text-gray-300 text-xl hover:text-white" />
-              </button>
-            )}
-          </div>
-        </section>
-
-        {/* Songs Section */}
-        <section>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-white cursor-default">
-              Songs
-            </h2>
-          </div>
-
-          <div className="relative">
-            {showLeftArrowSongs && (
-              <button
-                onClick={() => scrollSongs("left")}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
-                style={{ marginLeft: "-20px" }}
-              >
-                <FaChevronLeft className="text-gray-300 text-xl hover:text-white" />
-              </button>
-            )}
-            <div
-              ref={songsRef}
-              className="overflow-x-auto pb-4 scrollbar-hide"
-            >
-              <div className="flex space-x-6 w-max">
-                {topTracks.map((item, index) => {
-                  const isCurrentTrack =
-                    currentTrack &&
-                    currentTrack.title === item.track.name &&
-                    currentTrack.artist === item.track.artists[0].name;
-                  const songId = `song-${index}`;
-
-                  return (
+                <div className="flex space-x-6 w-max">
+                  {filteredPlaylists.map((chart) => (
                     <div
-                      key={index}
-                      className="bg-gray-800 p-4 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-48 relative transform hover:scale-105 transition-transform ease-in-out duration-300"
-                      onClick={() => handleTrackClick(index)}
-                      onMouseEnter={() => setHoveredSong(index)}
-                      onMouseLeave={() => setHoveredSong(null)}
+                      key={chart.id}
+                      className="bg-gray-800 p-5 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-64 relative transform hover:scale-105 transition-transform ease-in-out duration-300"
+                      onClick={() => handleChartClick(chart)}
+                      onMouseEnter={() => setHoveredPlaylist(chart.id)}
+                      onMouseLeave={() => setHoveredPlaylist(null)}
                     >
-                      <div className="aspect-square w-full rounded-lg mb-4 group-hover:shadow-xl transition-shadow overflow-hidden relative">
+                      <div className="aspect-square w-full rounded-lg mb-5 group-hover:shadow-xl transition-shadow overflow-hidden relative">
                         <img
-                          src={item.track.album.images[0].url}
-                          alt={item.track.name}
+                          src={chart.images[0].url}
+                          alt={chart.name}
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <button
-                            onClick={(e) => toggleSongLike(songId, e)}
+                            onClick={(e) => togglePlaylistLike(chart.id, e)}
                             className="p-2 bg-black bg-opacity-60 rounded-full hover:bg-opacity-80 transition-all"
                           >
-                            {likedItems.songs.includes(songId) ? (
+                            {likedItems.playlists.includes(chart.id) ? (
                               <FaHeart className="text-red-500 text-lg" />
                             ) : (
                               <FaRegHeart className="text-white text-lg" />
                             )}
                           </button>
                         </div>
-                        {hoveredSong === index && (
+                        {hoveredPlaylist === chart.id && (
                           <div className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl hover:scale-105 transform cursor-pointer">
                             <FaPlay className="text-black ml-1" />
                           </div>
                         )}
-                        {isCurrentTrack && isPlaying && (
-                          <div className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl cursor-pointer">
-                            <div className="flex items-center justify-center w-full h-4">
-                              <EqualizerBars />
-                            </div>
-                          </div>
-                        )}
                       </div>
-                      <h3
-                        className={`text-md font-bold text-white truncate ${
-                          isCurrentTrack ? "text-green-500" : ""
-                        } cursor-pointer`}
-                      >
-                        {item.track.name}
-                        {item.track.explicit && (
-                          <MdExplicit className="inline-block ml-1 text-gray-400" />
-                        )}
+                      <h3 className="text-lg font-bold text-white truncate cursor-pointer">
+                        {chart.name}
                       </h3>
-                      <p className="text-sm text-gray-400 mt-1 truncate cursor-pointer">
-                        {item.track.artists
-                          .map((artist) => artist.name)
-                          .join(", ")}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-2 cursor-pointer">
-                        {item.track.duration_formatted}
+                      <p className="text-md text-gray-400 mt-2 cursor-pointer">
+                        {chart.tracks.total} tracks • Updated weekly
                       </p>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
+              {showRightArrowPlaylists && (
+                <button
+                  onClick={() => scrollPlaylists("right")}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
+                  style={{ marginRight: "-20px" }}
+                >
+                  <FaChevronRight className="text-gray-300 text-xl hover:text-white" />
+                </button>
+              )}
             </div>
-            {showRightArrowSongs && (
-              <button
-                onClick={() => scrollSongs("right")}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
-                style={{ marginRight: "-20px" }}
-              >
-                <FaChevronRight className="text-gray-300 text-xl hover:text-white" />
-              </button>
-            )}
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* Popular Artists Section */}
-        <Singers />
+        {/* Songs Section */}
+        {filteredSongs.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-white cursor-default">
+                Songs
+              </h2>
+            </div>
+
+            <div className="relative">
+              {showLeftArrowSongs && (
+                <button
+                  onClick={() => scrollSongs("left")}
+                  className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
+                  style={{ marginLeft: "-20px" }}
+                >
+                  <FaChevronLeft className="text-gray-300 text-xl hover:text-white" />
+                </button>
+              )}
+              <div
+                ref={songsRef}
+                className="overflow-x-auto pb-4 scrollbar-hide"
+              >
+                <div className="flex space-x-6 w-max">
+                  {filteredSongs.map((item, index) => {
+                    const isCurrentTrack =
+                      currentTrack &&
+                      currentTrack.title === item.track.name &&
+                      currentTrack.artist === item.track.artists[0].name;
+                    const songId = `song-${index}`;
+
+                    return (
+                      <div
+                        key={index}
+                        className="bg-gray-800 p-4 rounded-xl hover:bg-gray-700 transition-all duration-200 cursor-pointer group flex-shrink-0 w-48 relative transform hover:scale-105 transition-transform ease-in-out duration-300"
+                        onClick={() => handleTrackClick(index)}
+                        onMouseEnter={() => setHoveredSong(index)}
+                        onMouseLeave={() => setHoveredSong(null)}
+                      >
+                        <div className="aspect-square w-full rounded-lg mb-4 group-hover:shadow-xl transition-shadow overflow-hidden relative">
+                          <img
+                            src={item.track.album.images[0].url}
+                            alt={item.track.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <button
+                              onClick={(e) => toggleSongLike(songId, e)}
+                              className="p-2 bg-black bg-opacity-60 rounded-full hover:bg-opacity-80 transition-all"
+                            >
+                              {likedItems.songs.includes(songId) ? (
+                                <FaHeart className="text-red-500 text-lg" />
+                              ) : (
+                                <FaRegHeart className="text-white text-lg" />
+                              )}
+                            </button>
+                          </div>
+                          {hoveredSong === index && (
+                            <div className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl hover:scale-105 transform cursor-pointer">
+                              <FaPlay className="text-black ml-1" />
+                            </div>
+                          )}
+                          {isCurrentTrack && isPlaying && (
+                            <div className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl cursor-pointer">
+                              <div className="flex items-center justify-center w-full h-4">
+                                <EqualizerBars />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <h3
+                          className={`text-md font-bold text-white truncate ${
+                            isCurrentTrack ? "text-green-500" : ""
+                          } cursor-pointer`}
+                        >
+                          {item.track.name}
+                          {item.track.explicit && (
+                            <MdExplicit className="inline-block ml-1 text-gray-400" />
+                          )}
+                        </h3>
+                        <p className="text-sm text-gray-400 mt-1 truncate cursor-pointer">
+                          {item.track.artists
+                            .map((artist) => artist.name)
+                            .join(", ")}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2 cursor-pointer">
+                          {item.track.duration_formatted}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {showRightArrowSongs && (
+                <button
+                  onClick={() => scrollSongs("right")}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-gray-800 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all shadow-lg"
+                  style={{ marginRight: "-20px" }}
+                >
+                  <FaChevronRight className="text-gray-300 text-xl hover:text-white" />
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Popular Artists Section - Only shown in "All" view */}
+        {activeFilter === "all" && <Singers />}
       </div>
 
       {/* Music Player */}
