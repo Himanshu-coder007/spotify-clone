@@ -1,6 +1,7 @@
 // components/MusicPlayer.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaVolumeUp, FaVolumeMute, FaTimes } from 'react-icons/fa';
+import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaVolumeUp, FaVolumeMute, FaTimes, FaMusic } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import songsData from '../data/songs.json';
 
 const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, onClose }) => {
@@ -8,7 +9,10 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
+  const [showLyrics, setShowLyrics] = useState(false);
   const audioRef = useRef(null);
+  const lyricsContainerRef = useRef(null);
+  const activeLyricRef = useRef(null);
 
   const songs = songsData.songs;
 
@@ -33,16 +37,17 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Spacebar to play/pause
       if (e.code === 'Space') {
-        e.preventDefault(); // Prevent default spacebar behavior (scrolling)
+        e.preventDefault();
         setIsPlaying(!isPlaying);
       }
-      
-      // Ctrl+M to toggle mute
       if (e.ctrlKey && e.code === 'KeyM') {
         e.preventDefault();
         setIsMuted(!isMuted);
+      }
+      if (e.ctrlKey && e.code === 'KeyL') {
+        e.preventDefault();
+        handleLyricsClick();
       }
     };
 
@@ -50,7 +55,50 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isPlaying, isMuted]);
+  }, [isPlaying, isMuted, currentTrack]);
+
+  useEffect(() => {
+    if (showLyrics && lyricsContainerRef.current && currentTrack.lyrics) {
+      const lyrics = currentTrack.lyrics;
+      let activeIndex = -1;
+      
+      for (let i = 0; i < lyrics.length; i++) {
+        if (currentTime >= lyrics[i].time) {
+          activeIndex = i;
+        } else {
+          break;
+        }
+      }
+
+      if (activeIndex >= 0) {
+        const container = lyricsContainerRef.current;
+        const lyricElements = container.querySelectorAll('p');
+        
+        if (lyricElements[activeIndex]) {
+          const activeElement = lyricElements[activeIndex];
+          activeLyricRef.current = activeElement;
+          
+          const containerHeight = container.clientHeight;
+          const elementTop = activeElement.offsetTop;
+          const elementHeight = activeElement.offsetHeight;
+          const scrollPosition = elementTop - (containerHeight / 2) + (elementHeight / 2);
+          
+          const buffer = 50;
+          const isElementInView = (
+            (elementTop >= container.scrollTop - buffer) && 
+            (elementTop + elementHeight <= container.scrollTop + containerHeight + buffer)
+          );
+          
+          if (!isElementInView) {
+            container.scrollTo({
+              top: scrollPosition,
+              behavior: 'smooth'
+            });
+          }
+        }
+      }
+    }
+  }, [currentTime, showLyrics, currentTrack.lyrics]);
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -100,6 +148,18 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  const handleLyricsClick = () => {
+    if (!currentTrack.lyrics || currentTrack.lyrics.length === 0) {
+      toast.info('Lyrics not available for this track', {
+        position: 'bottom-center',
+        autoClose: 2000,
+        hideProgressBar: true,
+      });
+    } else {
+      setShowLyrics(!showLyrics);
+    }
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 p-4 z-50">
       <audio
@@ -110,8 +170,54 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
         onLoadedMetadata={handleTimeUpdate}
       />
       
+      {showLyrics && (
+        <div className="fixed inset-0 bg-gradient-to-b from-emerald-900/90 to-gray-900 z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-b from-emerald-900/30 to-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
+            <button 
+              onClick={() => setShowLyrics(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              aria-label="Close lyrics"
+            >
+              <FaTimes size={24} />
+            </button>
+            
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-white mb-6">{currentTrack.title} - Lyrics</h2>
+              <div 
+                ref={lyricsContainerRef}
+                className="space-y-4 h-[70vh] overflow-y-auto pr-4 scroll-smooth"
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
+              >
+                {currentTrack.lyrics ? (
+                  currentTrack.lyrics.map((line, index) => {
+                    const isActive = currentTime >= line.time;
+                    return (
+                      <p 
+                        key={index} 
+                        ref={isActive ? activeLyricRef : null}
+                        className={`text-lg transition-all duration-300 px-2 ${
+                          isActive 
+                            ? 'text-emerald-400 font-medium' 
+                            : 'text-gray-400'
+                        }`}
+                      >
+                        {line.text}
+                      </p>
+                    );
+                  })
+                ) : (
+                  <p className="text-lg text-gray-400 px-2">No lyrics available for this track</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center gap-4 relative">
-        {/* Close Button - Top Right */}
         <button 
           onClick={onClose}
           className="absolute top-3 right-4 text-gray-400 hover:text-white transition-colors"
@@ -120,7 +226,6 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
           <FaTimes size={16} />
         </button>
 
-        {/* Track Info */}
         <div className="flex items-center gap-4 w-full md:w-1/4">
           <img 
             src={currentTrack.cover} 
@@ -133,7 +238,6 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
           </div>
         </div>
 
-        {/* Player Controls */}
         <div className="flex flex-col items-center w-full md:w-2/4">
           <div className="flex items-center gap-6 mb-2">
             <button 
@@ -159,7 +263,6 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
             </button>
           </div>
           
-          {/* Progress Bar */}
           <div className="w-full flex items-center gap-2">
             <span className="text-xs text-gray-400 w-10 text-right">
               {formatTime(currentTime)}
@@ -182,12 +285,22 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
           </div>
         </div>
 
-        {/* Volume Control */}
-        <div className="flex items-center gap-2 w-full md:w-1/4 justify-end mt-8">
+        <div className="flex items-center gap-4 w-full md:w-1/4 justify-end mt-8">
+          <button 
+            onClick={handleLyricsClick}
+            className={`p-2 rounded-full transition-colors ${currentTrack.lyrics ? 'text-gray-400 hover:text-white' : 'text-gray-600 cursor-not-allowed'}`}
+            aria-label="Show lyrics"
+            disabled={!currentTrack.lyrics}
+            title={currentTrack.lyrics ? 'Show lyrics (Ctrl+L)' : 'Lyrics not available'}
+          >
+            <FaMusic size={18} />
+          </button>
+          
           <button 
             onClick={toggleMute} 
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white p-2"
             aria-label={isMuted ? "Unmute" : "Mute"}
+            title={isMuted ? 'Unmute (Ctrl+M)' : 'Mute (Ctrl+M)'}
           >
             {isMuted || volume === 0 ? <FaVolumeMute size={18} /> : <FaVolumeUp size={18} />}
           </button>
