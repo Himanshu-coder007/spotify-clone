@@ -14,22 +14,20 @@ const CreatePlaylist = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // Use songs from the imported JSON file
   const recommendedSongs = songsData.songs;
 
-  // Search function using the songs data
   const searchSongs = (query) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
     }
-    
-    const results = songsData.songs.filter(song => 
-      song.title.toLowerCase().includes(query.toLowerCase()) || 
+
+    const results = songsData.songs.filter(song =>
+      song.title.toLowerCase().includes(query.toLowerCase()) ||
       song.artist.toLowerCase().includes(query.toLowerCase())
     );
-    
-    setSearchResults(results.slice(0, 8)); // Limit to 8 results
+
+    setSearchResults(results.slice(0, 8));
   };
 
   useEffect(() => {
@@ -44,6 +42,8 @@ const CreatePlaylist = () => {
   }, [searchQuery]);
 
   const savePlaylist = () => {
+    if (songs.length === 0) return;
+
     const newPlaylist = {
       id: Date.now(),
       name: playlistName,
@@ -52,14 +52,20 @@ const CreatePlaylist = () => {
       coverImage: songs.length > 0 ? songs[0].cover : null,
       createdAt: new Date().toISOString()
     };
-    
-    // Save to local storage
+
     const playlists = JSON.parse(localStorage.getItem('playlists')) || [];
     playlists.push(newPlaylist);
     localStorage.setItem('playlists', JSON.stringify(playlists));
-    
-    showSuccessToast('Playlist saved successfully!');
-    // Reset form
+
+    toast.success('Playlist saved successfully!', {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+
     setPlaylistName('My Playlist');
     setDescription('');
     setSongs([]);
@@ -67,17 +73,12 @@ const CreatePlaylist = () => {
   };
 
   const addSong = (song) => {
-    // Check if song already exists in playlist
-    if (songs.some(s => s.id === song.id)) {
-      showInfoToast(`${song.title} is already in the playlist`);
-      return;
-    }
+    if (songs.some(s => s.id === song.id)) return;
     
     setSongs([...songs, song]);
     if (songs.length === 0) {
       setCoverImage(song.cover);
     }
-    showSuccessToast(`${song.title} added to playlist`);
   };
 
   const removeSong = (songId) => {
@@ -88,37 +89,11 @@ const CreatePlaylist = () => {
     } else if (updatedSongs.length === 0) {
       setCoverImage(null);
     }
-    showInfoToast('Song removed from playlist');
   };
 
   const updatePlaylist = (e) => {
     e.preventDefault();
     setShowEditForm(false);
-    showSuccessToast('Playlist details updated!');
-  };
-
-  const showSuccessToast = (message) => {
-    toast.success(message, {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
-  };
-
-  const showInfoToast = (message) => {
-    toast.info(message, {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
   };
 
   const clearSearch = () => {
@@ -127,23 +102,21 @@ const CreatePlaylist = () => {
   };
 
   return (
-    <div className="h-screen bg-black text-white overflow-hidden flex flex-col">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
+    <div className="min-h-screen bg-black text-white flex flex-col overflow-hidden w-[calc(100vw-360px)]">
+      <style jsx global>{`
+        ::-webkit-scrollbar {
+          display: none;
+        }
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      `}</style>
+
+      <ToastContainer />
+
+      <div className="flex-1 overflow-y-auto w-full px-4 sm:px-6 lg:px-12 xl:px-24 py-8">
         {/* Playlist Header */}
-        <div className="flex flex-col md:flex-row items-start mb-8 gap-6 max-w-6xl mx-auto">
-          <div className="w-full md:w-64 h-64 bg-gray-800 rounded-lg shadow-lg flex items-center justify-center shrink-0">
+        <div className="flex flex-col lg:flex-row items-start mb-8 gap-6 w-full">
+          <div className="w-full lg:w-64 h-64 bg-gray-800 rounded-lg shadow-lg flex items-center justify-center shrink-0">
             {coverImage ? (
               <img src={coverImage} alt="Playlist cover" className="w-full h-full object-cover rounded-lg" />
             ) : (
@@ -153,11 +126,10 @@ const CreatePlaylist = () => {
           <div className="flex-1 w-full">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 gap-4">
               <div className="flex items-center">
-                <h2 className="text-4xl font-bold mr-3 truncate max-w-md">{playlistName}</h2>
-                <button 
+                <h2 className="text-4xl font-bold mr-3 truncate max-w-full">{playlistName}</h2>
+                <button
                   onClick={() => setShowEditForm(true)}
-                  className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-gray-800"
-                  aria-label="Edit playlist"
+                  className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-800"
                 >
                   <FiEdit size={24} />
                 </button>
@@ -171,22 +143,20 @@ const CreatePlaylist = () => {
                 Save Playlist
               </button>
             </div>
-            <p className="text-gray-400 mb-4 text-lg line-clamp-2 max-w-3xl">{description}</p>
-            <div className="flex items-center text-lg text-gray-400">
-              <span>{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
-            </div>
+            <p className="text-gray-400 mb-4 text-lg line-clamp-2 w-full">{description}</p>
+            <p className="text-gray-400 text-lg">{songs.length} {songs.length === 1 ? 'song' : 'songs'}</p>
           </div>
         </div>
 
-        {/* Edit Playlist Modal */}
+        {/* Modal */}
         {showEditForm && (
           <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 p-8 rounded-lg max-w-2xl w-full border border-gray-800 shadow-xl">
+            <div className="bg-gray-900 p-8 rounded-lg w-full max-w-2xl border border-gray-800 shadow-xl">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold">Edit Playlist</h3>
-                <button 
+                <button
                   onClick={() => setShowEditForm(false)}
-                  className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
+                  className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-800"
                 >
                   <FiX size={24} />
                 </button>
@@ -221,13 +191,13 @@ const CreatePlaylist = () => {
                   <button
                     type="button"
                     onClick={() => setShowEditForm(false)}
-                    className="px-6 py-3 text-lg rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
+                    className="px-6 py-3 text-lg rounded-full border border-gray-600 hover:bg-gray-800"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 text-lg rounded-full transition-colors"
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 text-lg rounded-full"
                   >
                     Save Changes
                   </button>
@@ -237,128 +207,110 @@ const CreatePlaylist = () => {
           </div>
         )}
 
-        {/* Main Content */}
-        <div className="space-y-8 max-w-6xl mx-auto">
-          {/* Playlist Songs Section */}
-          <div className="bg-gray-900 rounded-xl p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold">Your Playlist Songs</h3>
-              <span className="text-lg text-gray-400">{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
-            </div>
-            {songs.length > 0 ? (
-              <div className="space-y-3">
-                {songs.map((song, index) => (
-                  <div 
-                    key={song.id} 
-                    className="flex items-center p-4 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors"
-                  >
-                    <span className="text-gray-500 w-8 text-center text-lg">{index + 1}</span>
-                    <img src={song.cover} alt={song.title} className="w-14 h-14 rounded mr-4" />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-lg truncate">{song.title}</h4>
-                      <p className="text-gray-400 truncate">{song.artist}</p>
-                    </div>
-                    <button 
-                      onClick={() => removeSong(song.id)}
-                      className="text-red-500 hover:text-red-400 p-2 transition-colors"
-                      aria-label="Remove song"
-                    >
-                      <FiTrash2 size={22} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16 text-gray-500">
-                <FiMusic className="mx-auto text-5xl mb-4" />
-                <p className="text-xl">Your playlist is empty</p>
-                <p className="text-lg mt-2">Add songs from below to get started</p>
-              </div>
-            )}
+        {/* Playlist Songs */}
+        <div className="bg-gray-900 rounded-xl p-6 mb-8 w-full">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold">Your Playlist Songs</h3>
+            <span className="text-lg text-gray-400">{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
           </div>
-
-          {/* Search Section */}
-          <div className="relative">
-            <div className={`flex items-center border ${isSearchFocused ? 'border-green-500' : 'border-gray-700'} rounded-full px-6 py-4 transition-all duration-200 bg-gray-900 w-full`}>
-              <FiSearch className="text-gray-500 mr-3 text-xl" />
-              <input
-                type="text"
-                placeholder="Search for songs to add..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                className="w-full bg-transparent outline-none text-white placeholder-gray-500 text-lg"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={clearSearch}
-                  className="text-gray-500 hover:text-white ml-3 transition-colors"
-                >
-                  <FiX size={22} />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="bg-gray-900 rounded-xl p-6">
-              <h3 className="text-2xl font-bold mb-6">Search Results</h3>
-              <div className="space-y-3">
-                {searchResults.map(song => (
-                  <div 
-                    key={song.id} 
-                    className="flex items-center p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
-                    onClick={() => addSong(song)}
-                  >
-                    <img src={song.cover} alt={song.title} className="w-14 h-14 rounded mr-4" />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-lg truncate">{song.title}</h4>
-                      <p className="text-gray-400 truncate">{song.artist}</p>
-                    </div>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addSong(song);
-                      }}
-                      className="text-green-500 hover:text-green-400 p-2 transition-colors"
-                    >
-                      <FiPlus size={22} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Recommended Songs */}
-          <div className="bg-gray-900 rounded-xl p-6 mb-8">
-            <h3 className="text-2xl font-bold mb-6">Recommended Songs</h3>
+          {songs.length > 0 ? (
             <div className="space-y-3">
-              {recommendedSongs.map(song => (
-                <div 
-                  key={song.id} 
-                  className="flex items-center p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
-                  onClick={() => addSong(song)}
-                >
+              {songs.map((song, index) => (
+                <div key={song.id} className="flex items-center p-4 bg-gray-800 rounded-lg hover:bg-gray-750">
+                  <span className="text-gray-500 w-8 text-center text-lg">{index + 1}</span>
                   <img src={song.cover} alt={song.title} className="w-14 h-14 rounded mr-4" />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-lg truncate">{song.title}</h4>
                     <p className="text-gray-400 truncate">{song.artist}</p>
                   </div>
-                  <button 
+                  <button
+                    onClick={() => removeSong(song.id)}
+                    className="text-red-500 hover:text-red-400 p-2"
+                  >
+                    <FiTrash2 size={22} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 text-gray-500">
+              <FiMusic className="mx-auto text-5xl mb-4" />
+              <p className="text-xl">Your playlist is empty</p>
+              <p className="text-lg mt-2">Add songs from below to get started</p>
+            </div>
+          )}
+        </div>
+
+        {/* Search Input */}
+        <div className="mb-6 w-full">
+          <div className={`flex items-center border ${isSearchFocused ? 'border-green-500' : 'border-gray-700'} rounded-full px-6 py-4 bg-gray-900`}>
+            <FiSearch className="text-gray-500 mr-3 text-xl" />
+            <input
+              type="text"
+              placeholder="Search for songs to add..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              className="w-full bg-transparent outline-none text-white placeholder-gray-500 text-lg"
+            />
+            {searchQuery && (
+              <button onClick={clearSearch} className="text-gray-500 hover:text-white ml-3">
+                <FiX size={22} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Search Results */}
+        {searchResults.length > 0 && (
+          <div className="bg-gray-900 rounded-xl p-6 mb-8 w-full">
+            <h3 className="text-2xl font-bold mb-6">Search Results</h3>
+            <div className="space-y-3">
+              {searchResults.map(song => (
+                <div key={song.id} onClick={() => addSong(song)} className="flex items-center p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                  <img src={song.cover} alt={song.title} className="w-14 h-14 rounded mr-4" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-lg truncate">{song.title}</h4>
+                    <p className="text-gray-400 truncate">{song.artist}</p>
+                  </div>
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       addSong(song);
                     }}
-                    className="text-green-500 hover:text-green-400 p-2 transition-colors"
+                    className="text-green-500 hover:text-green-400 p-2"
                   >
                     <FiPlus size={22} />
                   </button>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Recommended Songs */}
+        <div className="bg-gray-900 rounded-xl p-6 mb-16 w-full">
+          <h3 className="text-2xl font-bold mb-6">Recommended Songs</h3>
+          <div className="space-y-3">
+            {recommendedSongs.map(song => (
+              <div key={song.id} onClick={() => addSong(song)} className="flex items-center p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer">
+                <img src={song.cover} alt={song.title} className="w-14 h-14 rounded mr-4" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-lg truncate">{song.title}</h4>
+                  <p className="text-gray-400 truncate">{song.artist}</p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addSong(song);
+                  }}
+                  className="text-green-500 hover:text-green-400 p-2"
+                >
+                  <FiPlus size={22} />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </div>

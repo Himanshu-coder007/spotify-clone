@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiMusic, FiEdit, FiTrash2, FiArrowLeft } from 'react-icons/fi';
+import { FiMusic, FiEdit, FiTrash2, FiArrowLeft, FiX } from 'react-icons/fi';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -63,7 +63,7 @@ const PlaylistView = () => {
   if (!playlist) return null;
 
   return (
-    <div className="h-screen bg-black text-white overflow-hidden flex flex-col">
+    <div className="h-screen bg-black text-white overflow-hidden flex flex-col w-[calc(100vw-360px)]">
       <ToastContainer />
       
       <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
