@@ -256,9 +256,11 @@ const CreatePlaylist = () => {
                     alt={song.title} 
                     className="w-12 h-12 rounded-md mr-3 object-cover" 
                   />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">{song.title}</h4>
-                    <p className="text-gray-400 text-xs truncate">{song.artist}</p>
+                  <div className="flex-1 min-w-0 grid grid-cols-4 gap-2 items-center">
+                    <div className="col-span-1 truncate font-medium text-sm">{song.title}</div>
+                    <div className="col-span-1 truncate text-gray-400 text-sm">{song.artist}</div>
+                    <div className="col-span-1 truncate text-gray-400 text-sm">{song.album}</div>
+                    <div className="col-span-1 text-gray-400 text-sm">{song.duration}</div>
                   </div>
                   <button
                     onClick={() => removeSong(song.id)}
@@ -279,7 +281,7 @@ const CreatePlaylist = () => {
           )}
         </div>
 
-        {/* Search Input - Updated with reduced width and left alignment */}
+        {/* Search Input */}
         <div className="mb-6 w-full max-w-md">
           <div 
             className={`flex items-center border ${
@@ -324,9 +326,11 @@ const CreatePlaylist = () => {
                     alt={song.title} 
                     className="w-12 h-12 rounded-md mr-3 object-cover" 
                   />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">{song.title}</h4>
-                    <p className="text-gray-400 text-xs truncate">{song.artist}</p>
+                  <div className="flex-1 min-w-0 grid grid-cols-4 gap-2 items-center">
+                    <div className="col-span-1 truncate font-medium text-sm">{song.title}</div>
+                    <div className="col-span-1 truncate text-gray-400 text-sm">{song.artist}</div>
+                    <div className="col-span-1 truncate text-gray-400 text-sm">{song.album}</div>
+                    <div className="col-span-1 text-gray-400 text-sm">{song.duration}</div>
                   </div>
                   <button
                     onClick={(e) => {
@@ -347,7 +351,7 @@ const CreatePlaylist = () => {
         {/* Recommended Songs */}
         <div className="bg-gray-900/80 rounded-xl p-4 mb-6 w-full border border-gray-800/50">
           <h3 className="text-lg font-bold mb-4">Recommended Songs</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {recommendedSongs.map(song => (
               <div 
                 key={song.id} 
@@ -359,9 +363,11 @@ const CreatePlaylist = () => {
                   alt={song.title} 
                   className="w-12 h-12 rounded-md mr-3 object-cover" 
                 />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm truncate">{song.title}</h4>
-                  <p className="text-gray-400 text-xs truncate">{song.artist}</p>
+                <div className="flex-1 min-w-0 grid grid-cols-4 gap-2 items-center">
+                  <div className="col-span-1 truncate font-medium text-sm">{song.title}</div>
+                  <div className="col-span-1 truncate text-gray-400 text-sm">{song.artist}</div>
+                  <div className="col-span-1 truncate text-gray-400 text-sm">{song.album}</div>
+                  <div className="col-span-1 text-gray-400 text-sm">{song.duration}</div>
                 </div>
                 <button
                   onClick={(e) => {
