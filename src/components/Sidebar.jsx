@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { FiHome, FiSearch, FiBook, FiChevronRight, FiPlus, FiX } from 'react-icons/fi';
+import { FiHome, FiSearch, FiBook, FiChevronRight, FiPlus, FiX, FiLogOut } from 'react-icons/fi';
 
-const Sidebar = () => {
+const Sidebar = ({ onLogout }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
 
@@ -113,6 +113,17 @@ const Sidebar = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Fixed bottom section with logout button */}
+      <div className="p-6 pt-0 flex-shrink-0">
+        <div 
+          className="flex items-center px-5 py-4 text-gray-300 hover:text-white rounded-lg hover:bg-gray-800 cursor-pointer transition-all duration-200"
+          onClick={onLogout}
+        >
+          <FiLogOut className="mr-6 text-2xl min-w-[24px]" />
+          <span className="text-lg font-semibold">Logout</span>
+        </div>
       </div>
     </div>
   );

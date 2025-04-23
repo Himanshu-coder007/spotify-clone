@@ -10,8 +10,12 @@ const Login = ({ setIsAuthenticated }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simple validation
-    if (email === 'user@example.com' && password === 'password') {
+    
+    // Get users from localStorage
+    const users = JSON.parse(localStorage.getItem('spotifyuser')) || [];
+    const user = users.find(user => user.email === email);
+    
+    if (user && user.password === password) {
       localStorage.setItem('isAuthenticated', 'true');
       setIsAuthenticated(true);
       toast.success('Logged in successfully!');

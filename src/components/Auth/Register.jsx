@@ -11,11 +11,30 @@ const Register = ({ setIsAuthenticated }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
-    // In a real app, you would send this to your backend
+
+    // Check if user already exists
+    const users = JSON.parse(localStorage.getItem('spotifyuser')) || [];
+    const userExists = users.some(user => user.email === email);
+    
+    if (userExists) {
+      toast.error('Email already registered');
+      return;
+    }
+
+    // Create new user
+    const newUser = {
+      email,
+      password, // Note: In a real app, you should NEVER store plain passwords
+      id: Date.now().toString()
+    };
+
+    // Save to localStorage
+    localStorage.setItem('spotifyuser', JSON.stringify([...users, newUser]));
     localStorage.setItem('isAuthenticated', 'true');
     setIsAuthenticated(true);
     toast.success('Account created and logged in!');
