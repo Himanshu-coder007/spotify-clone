@@ -18,7 +18,7 @@ const PlaylistView = () => {
   const [showPlayer, setShowPlayer] = useState(false);
   const [queue, setQueue] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
-  const [showQueue, setShowQueue] = useState(true);
+  const [showQueueSidebar, setShowQueueSidebar] = useState(false);
 
   useEffect(() => {
     const playlists = JSON.parse(localStorage.getItem('playlists')) || [];
@@ -83,6 +83,7 @@ const PlaylistView = () => {
     if (songToPlay) {
       if (currentTrack?.id === songId && isPlaying) {
         setIsPlaying(false);
+        setShowQueueSidebar(false);
       } else {
         // Find the index of the clicked song in the queue
         const songIndex = queue.findIndex(song => song.id === songId);
@@ -91,6 +92,7 @@ const PlaylistView = () => {
           setCurrentTrack(songToPlay);
           setIsPlaying(true);
           setShowPlayer(true);
+          setShowQueueSidebar(true);
         }
       }
     }
@@ -104,6 +106,7 @@ const PlaylistView = () => {
         setCurrentTrack(firstSong);
         setIsPlaying(true);
         setShowPlayer(true);
+        setShowQueueSidebar(true);
       }
     }
   };
@@ -115,6 +118,8 @@ const PlaylistView = () => {
       setCurrentTrack(queue[nextIndex]);
     } else {
       setIsPlaying(false);
+      setCurrentTrack(null);
+      setShowQueueSidebar(false);
     }
   };
 
@@ -133,7 +138,7 @@ const PlaylistView = () => {
       <ToastContainer />
       
       {/* Main Content */}
-      <div className="h-screen bg-black text-white overflow-hidden flex flex-col w-[calc(100vw-360px)]">
+      <div className={`h-screen bg-black text-white overflow-hidden flex flex-col ${showQueueSidebar ? 'w-[calc(100vw-360px)]' : 'w-full'}`}>
         <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
           {/* Back button */}
           <button 
@@ -348,7 +353,12 @@ const PlaylistView = () => {
             setCurrentTrack={setCurrentTrack}
             isPlaying={isPlaying}
             setIsPlaying={setIsPlaying}
-            onClose={() => setShowPlayer(false)}
+            onClose={() => {
+              setShowPlayer(false);
+              setIsPlaying(false);
+              setCurrentTrack(null);
+              setShowQueueSidebar(false);
+            }}
             onNext={handleNextSong}
             onPrevious={handlePreviousSong}
             hasNext={currentSongIndex < queue.length - 1}
@@ -357,52 +367,45 @@ const PlaylistView = () => {
         )}
       </div>
 
-      {/* Queue Sidebar */}
-      {showQueue && (
+      {/* Queue Sidebar - Only shown when a song is playing */}
+      {showQueueSidebar && currentTrack && (
         <div className="w-80 bg-gray-900 border-l border-gray-800 flex flex-col">
           <div className="p-4 border-b border-gray-800">
             <h3 className="text-lg font-bold">Now Playing</h3>
           </div>
           
-          {currentTrack ? (
-            <div className="p-4 border-b border-gray-800">
-              <div className="flex items-center gap-3 mb-4">
-                <img 
-                  src={currentTrack.cover || '/default-cover.jpg'} 
-                  alt={currentTrack.title} 
-                  className="w-16 h-16 rounded"
-                />
-                <div>
-                  <h4 className="font-medium truncate">{currentTrack.title}</h4>
-                  <p className="text-sm text-gray-400 truncate">{currentTrack.artist}</p>
-                </div>
-              </div>
-              <div className="flex justify-between items-center text-sm text-gray-400">
-                <span>From: {playlist.name}</span>
-                <button 
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="text-white p-2 rounded-full bg-green-600 hover:bg-green-700"
-                >
-                  {isPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}
-                </button>
+          <div className="p-4 border-b border-gray-800">
+            <div className="flex items-center gap-3 mb-4">
+              <img 
+                src={currentTrack.cover || '/default-cover.jpg'} 
+                alt={currentTrack.title} 
+                className="w-16 h-16 rounded"
+              />
+              <div>
+                <h4 className="font-medium truncate">{currentTrack.title}</h4>
+                <p className="text-sm text-gray-400 truncate">{currentTrack.artist}</p>
               </div>
             </div>
-          ) : (
-            <div className="p-4 border-b border-gray-800 text-center text-gray-500">
-              <FiMusic className="mx-auto text-2xl mb-2" />
-              <p>No song playing</p>
+            <div className="flex justify-between items-center text-sm text-gray-400">
+              <span>From: {playlist.name}</span>
+              <button 
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="text-white p-2 rounded-full bg-green-600 hover:bg-green-700"
+              >
+                {isPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}
+              </button>
             </div>
-          )}
+          </div>
           
           <div className="p-4 border-b border-gray-800">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-medium">Next in Queue</h3>
-              <span className="text-sm text-gray-400">{queue.length - (currentTrack ? currentSongIndex + 1 : 0)} songs</span>
+              <span className="text-sm text-gray-400">{queue.length - currentSongIndex - 1} songs</span>
             </div>
           </div>
           
           <div className="flex-1 overflow-y-auto scrollbar-hide">
-            {queue.length > 0 ? (
+            {queue.length > currentSongIndex + 1 ? (
               <div className="divide-y divide-gray-800">
                 {queue.slice(currentSongIndex + 1).map((song, index) => (
                   <div 

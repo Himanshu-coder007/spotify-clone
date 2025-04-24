@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaPlay, FaChevronLeft } from 'react-icons/fa';
+import { FaPlay, FaChevronLeft, FaTimes } from 'react-icons/fa';
 import { MdExplicit } from 'react-icons/md';
 import MusicPlayer from '../components/MusicPlayer';
 import songsData from '../data/songs.json';
@@ -13,6 +13,9 @@ const Playlist = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
   const [hoveredRow, setHoveredRow] = useState(null);
+  const [showQueue, setShowQueue] = useState(false);
+  const [queue, setQueue] = useState([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
 
   // Mock playlist data
   const featuredPlaylists = [
@@ -104,8 +107,15 @@ const Playlist = () => {
       src: song.src,
       duration: song.duration
     });
+    
+    // Set the queue to the remaining songs in the playlist
+    const newQueue = [...playlistSongs.slice(index + 1)];
+    setQueue(newQueue);
+    setCurrentTrackIndex(index);
+    
     setIsPlaying(true);
     setShowPlayer(true);
+    setShowQueue(true);
   };
 
   const handlePlayAll = () => {
@@ -120,9 +130,44 @@ const Playlist = () => {
         src: firstSong.src,
         duration: firstSong.duration
       });
+      
+      // Set the queue to all songs except the first one
+      const newQueue = [...playlistSongs.slice(1)];
+      setQueue(newQueue);
+      setCurrentTrackIndex(0);
+      
       setIsPlaying(true);
       setShowPlayer(true);
+      setShowQueue(true);
     }
+  };
+
+  const handleNextTrack = () => {
+    if (queue.length > 0) {
+      const nextSong = queue[0];
+      setCurrentTrack({
+        id: nextSong.id,
+        title: nextSong.title,
+        artist: nextSong.artist,
+        album: nextSong.album,
+        cover: nextSong.cover,
+        src: nextSong.src,
+        duration: nextSong.duration
+      });
+      
+      // Update the queue to remove the played song
+      const newQueue = [...queue.slice(1)];
+      setQueue(newQueue);
+      setCurrentTrackIndex(currentTrackIndex + 1);
+    } else {
+      // No more songs in queue
+      setIsPlaying(false);
+      setShowQueue(false);
+    }
+  };
+
+  const handleTrackEnd = () => {
+    handleNextTrack();
   };
 
   if (!playlist) {
@@ -135,12 +180,12 @@ const Playlist = () => {
 
   return (
     <div 
-      className="flex-1 h-screen overflow-y-auto p-8"
+      className="flex-1 h-screen overflow-y-auto p-8 relative"
       style={{
         background: `linear-gradient(180deg, ${playlistBackgroundColor} 0%, #000000 100%)`
       }}
     >
-      <div className="max-w-6xl mx-auto">
+      <div className={`max-w-6xl mx-auto transition-all duration-300 ${showQueue ? 'mr-80' : ''}`}>
         {/* Back button */}
         <button 
           onClick={() => navigate(-1)}
@@ -267,6 +312,75 @@ const Playlist = () => {
         </div>
       </div>
 
+      {/* Queue Sidebar */}
+      {showQueue && (
+        <div className="fixed right-0 top-0 h-full w-80 bg-gray-900 bg-opacity-90 backdrop-blur-sm z-10 shadow-2xl overflow-y-auto">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-white">Queue</h2>
+              <button 
+                onClick={() => setShowQueue(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            {/* Now Playing */}
+            <div className="mb-8">
+              <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-4">Now Playing</h3>
+              {currentTrack && (
+                <div className="flex items-center bg-gray-800 bg-opacity-50 rounded-lg p-4">
+                  <img 
+                    src={currentTrack.cover} 
+                    alt={currentTrack.title}
+                    className="w-16 h-16 object-cover rounded mr-4"
+                  />
+                  <div>
+                    <h4 className="text-white font-medium">{currentTrack.title}</h4>
+                    <p className="text-gray-400 text-sm">{currentTrack.artist}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Next in Queue */}
+            <div>
+              <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-4">Next in Queue</h3>
+              {queue.length > 0 ? (
+                <ul className="space-y-3">
+                  {queue.map((song, index) => (
+                    <li 
+                      key={`${song.id}-${index}`}
+                      className="flex items-center p-2 hover:bg-gray-800 rounded-lg cursor-pointer"
+                      onClick={() => {
+                        setCurrentTrack(song);
+                        setQueue(queue.slice(index + 1));
+                        setCurrentTrackIndex(currentTrackIndex + index + 1);
+                        setIsPlaying(true);
+                      }}
+                    >
+                      <img 
+                        src={song.cover} 
+                        alt={song.title}
+                        className="w-12 h-12 object-cover rounded mr-3"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-white font-medium truncate">{song.title}</h4>
+                        <p className="text-gray-400 text-sm truncate">{song.artist}</p>
+                      </div>
+                      <span className="text-gray-400 text-sm ml-2">{song.duration}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-400 text-sm">No more songs in queue</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Music Player */}
       {showPlayer && currentTrack && (
         <MusicPlayer 
@@ -275,6 +389,11 @@ const Playlist = () => {
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}
           onClose={() => setShowPlayer(false)}
+          onTrackEnd={handleTrackEnd}
+          onNextTrack={handleNextTrack}
+          showQueueButton={true}
+          onToggleQueue={() => setShowQueue(!showQueue)}
+          queueVisible={showQueue}
         />
       )}
     </div>

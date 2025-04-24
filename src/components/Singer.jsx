@@ -4,7 +4,7 @@ import MusicPlayer from './MusicPlayer';
 import anirudhSongs from '../data/anirudhsongs.json';
 import arijitSongs from '../data/arijitsongs.json';
 import singers from '../data/singers.json';
-import { FaPlay, FaPause } from 'react-icons/fa';
+import { FaPlay, FaPause, FaTimes, FaList } from 'react-icons/fa';
 
 const Singer = () => {
   const { singerId } = useParams();
@@ -15,6 +15,8 @@ const Singer = () => {
   const [currentPlayingId, setCurrentPlayingId] = useState(null);
   const [singer, setSinger] = useState(null);
   const [isPlayAllActive, setIsPlayAllActive] = useState(false);
+  const [showQueue, setShowQueue] = useState(false);
+  const [queue, setQueue] = useState([]);
 
   useEffect(() => {
     const selectedSinger = singers.find(s => s.id === singerId);
@@ -39,6 +41,17 @@ const Singer = () => {
 
     setSongs(formattedSongs);
   }, [singerId]);
+
+  // Update queue when current track changes
+  useEffect(() => {
+    if (currentTrack && songs.length > 0) {
+      const currentIndex = songs.findIndex(song => song.id === currentTrack.id);
+      if (currentIndex !== -1) {
+        const newQueue = songs.slice(currentIndex + 1);
+        setQueue(newQueue);
+      }
+    }
+  }, [currentTrack, songs]);
 
   const handleSongClick = (song) => {
     if (!song.src) {
@@ -73,12 +86,20 @@ const Singer = () => {
     }
   };
 
+  const handlePlayFromQueue = (song) => {
+    handleSongClick(song);
+  };
+
+  const toggleQueue = () => {
+    setShowQueue(!showQueue);
+  };
+
   if (!singer) {
     return <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-green-900 to-black">Loading...</div>;
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-green-900 to-black">
+    <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-green-900 to-black relative">
       <div className="mb-8 flex items-end">
         <div className="mr-6">
           <img 
@@ -108,6 +129,14 @@ const Singer = () => {
             )}
           </button>
           
+          {currentTrack && (
+            <button 
+              className="bg-gray-700 text-white rounded-full p-3 hover:bg-gray-600 transition-colors duration-200"
+              onClick={toggleQueue}
+            >
+              <FaList className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         <div className="text-gray-400 border-b border-gray-800 pb-2 mb-4 grid grid-cols-12">
@@ -176,6 +205,75 @@ const Singer = () => {
           </div>
         )}
       </div>
+
+      {/* Queue Sidebar */}
+      {showQueue && currentTrack && (
+        <div className="fixed right-0 top-0 h-full w-80 bg-gray-900 z-50 shadow-2xl overflow-y-auto">
+          <div className="p-4 flex justify-between items-center border-b border-gray-800">
+            <h2 className="text-xl font-bold text-white">Queue</h2>
+            <button 
+              onClick={toggleQueue}
+              className="text-gray-400 hover:text-white"
+            >
+              <FaTimes className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="p-4 border-b border-gray-800">
+            <h3 className="text-sm uppercase text-gray-400 mb-2">Now Playing</h3>
+            <div className="flex items-center space-x-3">
+              <img 
+                src={currentTrack.cover} 
+                alt={currentTrack.title} 
+                className="w-12 h-12 rounded"
+                onError={(e) => {
+                  e.target.src = singer.image;
+                  e.target.onerror = null;
+                }}
+              />
+              <div>
+                <p className="font-medium text-white">{currentTrack.title}</p>
+                <p className="text-sm text-gray-400">{currentTrack.artist}</p>
+              </div>
+            </div>
+          </div>
+
+          {queue.length > 0 ? (
+            <div className="p-4">
+              <h3 className="text-sm uppercase text-gray-400 mb-2">Next Up</h3>
+              <div className="space-y-3">
+                {queue.map((song, index) => (
+                  <div 
+                    key={`queue-${song.id}`}
+                    className="flex items-center space-x-3 p-2 rounded hover:bg-gray-800 cursor-pointer"
+                    onClick={() => handlePlayFromQueue(song)}
+                  >
+                    <span className="text-gray-400 text-sm w-5">{index + 1}</span>
+                    <img 
+                      src={song.cover} 
+                      alt={song.title} 
+                      className="w-10 h-10 rounded"
+                      onError={(e) => {
+                        e.target.src = singer.image;
+                        e.target.onerror = null;
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-white truncate">{song.title}</p>
+                      <p className="text-sm text-gray-400 truncate">{song.artist}</p>
+                    </div>
+                    <span className="text-gray-400 text-sm">{song.duration}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 text-gray-400 text-center">
+              No more songs in queue
+            </div>
+          )}
+        </div>
+      )}
 
       {showPlayer && currentTrack && (
         <MusicPlayer 
