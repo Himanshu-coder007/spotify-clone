@@ -1,10 +1,21 @@
-// components/MusicPlayer.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPlay, FaPause, FaStepForward, FaStepBackward, FaVolumeUp, FaVolumeMute, FaTimes, FaMusic } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import songsData from '../data/songs.json';
 
-const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, onClose }) => {
+const MusicPlayer = ({ 
+  currentTrack, 
+  setCurrentTrack, 
+  isPlaying, 
+  setIsPlaying, 
+  onClose, 
+  onNext, 
+  onPrevious, 
+  hasNext, 
+  hasPrevious,
+  queue,
+  currentSongIndex,
+  setCurrentSongIndex
+}) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
@@ -13,8 +24,6 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
   const audioRef = useRef(null);
   const lyricsContainerRef = useRef(null);
   const activeLyricRef = useRef(null);
-
-  const songs = songsData.songs;
 
   useEffect(() => {
     if (audioRef.current) {
@@ -105,17 +114,19 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
   };
 
   const handleNext = () => {
-    const currentIndex = songs.findIndex(song => song.id === currentTrack.id);
-    const nextIndex = (currentIndex + 1) % songs.length;
-    setCurrentTrack(songs[nextIndex]);
-    setIsPlaying(true);
+    if (hasNext) {
+      onNext();
+    } else {
+      setIsPlaying(false);
+      setCurrentTrack(null);
+      onClose();
+    }
   };
 
   const handlePrevious = () => {
-    const currentIndex = songs.findIndex(song => song.id === currentTrack.id);
-    const prevIndex = (currentIndex - 1 + songs.length) % songs.length;
-    setCurrentTrack(songs[prevIndex]);
-    setIsPlaying(true);
+    if (hasPrevious) {
+      onPrevious();
+    }
   };
 
   const handleTimeUpdate = () => {
@@ -242,7 +253,8 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
           <div className="flex items-center gap-6 mb-2">
             <button 
               onClick={handlePrevious}
-              className="text-gray-400 hover:text-white transition-colors"
+              disabled={!hasPrevious}
+              className={`transition-colors ${hasPrevious ? 'text-gray-400 hover:text-white' : 'text-gray-600 cursor-not-allowed'}`}
               aria-label="Previous track"
             >
               <FaStepBackward size={18} />
@@ -256,7 +268,8 @@ const MusicPlayer = ({ currentTrack, setCurrentTrack, isPlaying, setIsPlaying, o
             </button>
             <button 
               onClick={handleNext}
-              className="text-gray-400 hover:text-white transition-colors"
+              disabled={!hasNext}
+              className={`transition-colors ${hasNext ? 'text-gray-400 hover:text-white' : 'text-gray-600 cursor-not-allowed'}`}
               aria-label="Next track"
             >
               <FaStepForward size={18} />

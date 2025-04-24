@@ -116,6 +116,7 @@ const PlaylistView = () => {
       const nextIndex = currentSongIndex + 1;
       setCurrentSongIndex(nextIndex);
       setCurrentTrack(queue[nextIndex]);
+      setIsPlaying(true);
     } else {
       setIsPlaying(false);
       setCurrentTrack(null);
@@ -128,6 +129,7 @@ const PlaylistView = () => {
       const prevIndex = currentSongIndex - 1;
       setCurrentSongIndex(prevIndex);
       setCurrentTrack(queue[prevIndex]);
+      setIsPlaying(true);
     }
   };
 
@@ -363,6 +365,9 @@ const PlaylistView = () => {
             onPrevious={handlePreviousSong}
             hasNext={currentSongIndex < queue.length - 1}
             hasPrevious={currentSongIndex > 0}
+            queue={queue}
+            currentSongIndex={currentSongIndex}
+            setCurrentSongIndex={setCurrentSongIndex}
           />
         )}
       </div>
