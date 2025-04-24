@@ -57,6 +57,9 @@ const CreatePlaylist = () => {
     playlists.push(newPlaylist);
     localStorage.setItem('playlists', JSON.stringify(playlists));
 
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event('playlistsUpdated'));
+
     toast.success('Playlist saved successfully!', {
       position: "top-right",
       autoClose: 3000,
