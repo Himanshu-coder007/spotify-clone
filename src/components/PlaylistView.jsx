@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiMusic, FiEdit, FiTrash2, FiArrowLeft, FiX, FiPlay, FiPause } from 'react-icons/fi';
+import { FiMusic, FiEdit, FiTrash2, FiArrowLeft, FiX, FiPlay, FiPause, FiHeart } from 'react-icons/fi';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import MusicPlayer from '../components/MusicPlayer';
@@ -19,6 +19,7 @@ const PlaylistView = () => {
   const [queue, setQueue] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [showQueueSidebar, setShowQueueSidebar] = useState(false);
+  const [likedSongs, setLikedSongs] = useState([]);
 
   useEffect(() => {
     const playlists = JSON.parse(localStorage.getItem('playlists')) || [];
@@ -32,7 +33,6 @@ const PlaylistView = () => {
       if (foundPlaylist.songs.length > 0) {
         const firstSong = songsData.songs.find(s => s.id === foundPlaylist.songs[0].id);
         setCurrentTrack(firstSong || null);
-        // Initialize queue with all songs in the playlist
         const initialQueue = foundPlaylist.songs.map(song => {
           return songsData.songs.find(s => s.id === song.id);
         }).filter(song => song !== undefined);
@@ -41,7 +41,36 @@ const PlaylistView = () => {
     } else {
       navigate('/');
     }
+
+    // Load liked songs from musicAppLikes
+    const musicAppLikes = JSON.parse(localStorage.getItem('musicAppLikes')) || { playlists: [], songs: [] };
+    setLikedSongs(musicAppLikes.songs || []);
   }, [id, navigate]);
+
+  const toggleLikeSong = (songId) => {
+    const musicAppLikes = JSON.parse(localStorage.getItem('musicAppLikes')) || { playlists: [], songs: [] };
+    const songIndex = musicAppLikes.songs.findIndex(id => id === songId);
+    
+    if (songIndex === -1) {
+      // Add to liked songs
+      musicAppLikes.songs.push(songId);
+      toast.success('Added to Liked Songs', {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } else {
+      // Remove from liked songs
+      musicAppLikes.songs.splice(songIndex, 1);
+      toast.info('Removed from Liked Songs', {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+    
+    localStorage.setItem('musicAppLikes', JSON.stringify(musicAppLikes));
+    setLikedSongs(musicAppLikes.songs);
+    window.dispatchEvent(new Event('likesUpdated'));
+  };
 
   const updatePlaylist = (e) => {
     e.preventDefault();
@@ -85,7 +114,6 @@ const PlaylistView = () => {
         setIsPlaying(false);
         setShowQueueSidebar(false);
       } else {
-        // Find the index of the clicked song in the queue
         const songIndex = queue.findIndex(song => song.id === songId);
         if (songIndex !== -1) {
           setCurrentSongIndex(songIndex);
@@ -279,6 +307,7 @@ const PlaylistView = () => {
                 {playlist.songs.map((song, index) => {
                   const songDetails = songsData.songs.find(s => s.id === song.id);
                   const isCurrentPlaying = currentTrack?.id === song.id && isPlaying;
+                  const isLiked = likedSongs.includes(song.id);
                   
                   return (
                     <div 
@@ -321,6 +350,16 @@ const PlaylistView = () => {
                       </div>
                       
                       <div className="col-span-1 flex items-center justify-end gap-3">
+                        <button
+                          className={`p-1 rounded-full ${isLiked ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLikeSong(song.id);
+                          }}
+                          aria-label={isLiked ? "Unlike song" : "Like song"}
+                        >
+                          <FiHeart className={isLiked ? 'fill-current' : ''} />
+                        </button>
                         <span className="text-gray-400 text-sm">
                           {songDetails?.duration || '0:00'}
                         </span>

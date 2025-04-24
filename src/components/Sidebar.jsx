@@ -10,7 +10,9 @@ import {
   FiLogOut,
   FiMusic,
   FiTrash2,
+  FiHeart,
 } from "react-icons/fi";
+import songsData from "../data/songs.json";
 
 const Sidebar = ({ onLogout }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,44 +20,54 @@ const Sidebar = ({ onLogout }) => {
   const [playlists, setPlaylists] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [filteredPlaylists, setFilteredPlaylists] = useState([]);
+  const [likedSongs, setLikedSongs] = useState([]);
+  const [allSongs, setAllSongs] = useState(songsData.songs);
   const location = useLocation();
 
-  // Function to load playlists from localStorage
-  const loadPlaylists = () => {
+  // Function to load playlists and liked songs from localStorage
+  const loadData = () => {
     try {
-      const savedPlaylists = JSON.parse(localStorage.getItem('playlists')) || [];
+      const savedPlaylists =
+        JSON.parse(localStorage.getItem("playlists")) || [];
       setPlaylists(savedPlaylists);
-      setFilteredPlaylists(savedPlaylists); // Initialize filtered playlists
+      setFilteredPlaylists(savedPlaylists);
+
+      // Updated to use musicAppLikes instead of collections
+      const musicAppLikes = JSON.parse(
+        localStorage.getItem("musicAppLikes")
+      ) || { playlists: [], songs: [] };
+      setLikedSongs(musicAppLikes.songs || []);
     } catch (error) {
-      console.error("Error loading playlists:", error);
+      console.error("Error loading data:", error);
       setPlaylists([]);
       setFilteredPlaylists([]);
+      setLikedSongs([]);
     }
   };
 
-  // Load playlists on initial render
+  // Load data on initial render
   useEffect(() => {
-    loadPlaylists();
-    
+    loadData();
+
     // Set up event listener for storage changes
     const handleStorageChange = (e) => {
-      if (e.key === 'playlists') {
-        loadPlaylists();
+      if (e.key === "playlists" || e.key === "musicAppLikes") {
+        loadData();
       }
     };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
+
+    window.addEventListener("storage", handleStorageChange);
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
-  // Also listen for custom events if playlists are updated within the same window
+  // Also listen for custom events if data is updated within the same window
   useEffect(() => {
-    const handleCustomEvent = () => loadPlaylists();
-    window.addEventListener('playlistsUpdated', handleCustomEvent);
-    return () => window.removeEventListener('playlistsUpdated', handleCustomEvent);
+    const handleCustomEvent = () => loadData();
+    window.addEventListener("likesUpdated", handleCustomEvent);
+    return () => window.removeEventListener("likesUpdated", handleCustomEvent);
   }, []);
 
   // Filter playlists when search query changes
@@ -63,7 +75,7 @@ const Sidebar = ({ onLogout }) => {
     if (searchQuery.trim() === "") {
       setFilteredPlaylists(playlists);
     } else {
-      const filtered = playlists.filter(playlist =>
+      const filtered = playlists.filter((playlist) =>
         playlist.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredPlaylists(filtered);
@@ -87,18 +99,25 @@ const Sidebar = ({ onLogout }) => {
   };
 
   const deletePlaylist = (playlistId) => {
-    const updatedPlaylists = playlists.filter(playlist => playlist.id !== playlistId);
-    localStorage.setItem('playlists', JSON.stringify(updatedPlaylists));
+    const updatedPlaylists = playlists.filter(
+      (playlist) => playlist.id !== playlistId
+    );
+    localStorage.setItem("playlists", JSON.stringify(updatedPlaylists));
     setPlaylists(updatedPlaylists);
     setShowDeleteConfirm(null);
-    
+
     // Dispatch event to notify other components
-    window.dispatchEvent(new Event('playlistsUpdated'));
-    
+    window.dispatchEvent(new Event("dataUpdated"));
+
     // If we're currently viewing the deleted playlist, redirect to home
     if (location.pathname === `/playlist/${playlistId}`) {
-      window.location.href = '/';
+      window.location.href = "/";
     }
+  };
+
+  // Get song details by ID
+  const getSongDetails = (songId) => {
+    return allSongs.find((song) => song.id === songId) || {};
   };
 
   return (
@@ -195,95 +214,169 @@ const Sidebar = ({ onLogout }) => {
 
             {/* User Playlists */}
             {filteredPlaylists.length > 0 ? (
-              filteredPlaylists.map(playlist => (
-                <div 
-                  key={playlist.id} 
-                  className="group relative bg-gray-800 rounded-xl hover:bg-gray-700 transition-all duration-200"
-                >
-                  <Link to={`/savedplaylist/${playlist.id}`}>
-                    <div className="p-4 flex items-center">
-                      <div className="w-16 h-16 bg-gray-700 rounded mr-4 overflow-hidden">
-                        {playlist.coverImage ? (
-                          <img 
-                            src={playlist.coverImage} 
-                            alt={playlist.name} 
-                            className="w-full h-full object-cover" 
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.parentElement.innerHTML = (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <FiMusic className="text-gray-500 text-xl" />
-                                </div>
-                              );
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <FiMusic className="text-gray-500 text-xl" />
+              <div className="bg-gray-800 rounded-xl p-4">
+                <h4 className="font-bold text-white mb-3 px-2">
+                  Your Playlists
+                </h4>
+                <div className="space-y-2">
+                  {filteredPlaylists.map((playlist) => (
+                    <div
+                      key={playlist.id}
+                      className="group relative hover:bg-gray-700 rounded-lg transition-all duration-200"
+                    >
+                      <Link to={`/savedplaylist/${playlist.id}`}>
+                        <div className="p-3 flex items-center">
+                          <div className="w-12 h-12 bg-gray-700 rounded mr-3 overflow-hidden">
+                            {playlist.coverImage ? (
+                              <img
+                                src={playlist.coverImage}
+                                alt={playlist.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.parentElement.innerHTML = (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <FiMusic className="text-gray-500 text-xl" />
+                                    </div>
+                                  );
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <FiMusic className="text-gray-500 text-xl" />
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-white truncate max-w-[180px]">{playlist.name}</h4>
-                        <p className="text-sm text-gray-400">
-                          {playlist.songs?.length || 0} {playlist.songs?.length === 1 ? 'song' : 'songs'}
-                        </p>
-                      </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-white truncate">
+                              {playlist.name}
+                            </h4>
+                            <p className="text-sm text-gray-400 truncate">
+                              {playlist.songs?.length || 0}{" "}
+                              {playlist.songs?.length === 1 ? "song" : "songs"}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+
+                      {/* Delete button */}
+                      <button
+                        className="absolute right-3 top-3 p-1 text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowDeleteConfirm(playlist.id);
+                        }}
+                      >
+                        <FiTrash2 />
+                      </button>
+
+                      {/* Delete confirmation */}
+                      {showDeleteConfirm === playlist.id && (
+                        <div className="absolute inset-0 bg-black bg-opacity-80 rounded-lg flex flex-col items-center justify-center p-4 z-10">
+                          <p className="text-white mb-4 text-center">
+                            Delete "{playlist.name}" playlist?
+                          </p>
+                          <div className="flex gap-3">
+                            <button
+                              className="px-4 py-2 bg-gray-700 text-white rounded-full hover:bg-gray-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowDeleteConfirm(null);
+                              }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deletePlaylist(playlist.id);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </Link>
-                  
-                  {/* Delete button */}
-                  <button
-                    className="absolute right-4 top-4 p-2 text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setShowDeleteConfirm(playlist.id);
-                    }}
-                  >
-                    <FiTrash2 />
-                  </button>
-                  
-                  {/* Delete confirmation */}
-                  {showDeleteConfirm === playlist.id && (
-                    <div className="absolute inset-0 bg-black bg-opacity-80 rounded-xl flex flex-col items-center justify-center p-4 z-10">
-                      <p className="text-white mb-4 text-center">Delete "{playlist.name}" playlist?</p>
-                      <div className="flex gap-3">
-                        <button
-                          className="px-4 py-2 bg-gray-700 text-white rounded-full hover:bg-gray-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeleteConfirm(null);
-                          }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deletePlaylist(playlist.id);
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  ))}
                 </div>
-              ))
+              </div>
+            ) : searchQuery ? (
+              <div className="bg-gray-800 rounded-xl p-6 text-center">
+                <p className="text-gray-400">
+                  No playlists found matching "{searchQuery}"
+                </p>
+              </div>
             ) : (
-              searchQuery ? (
-                <div className="bg-gray-800 rounded-xl p-6 text-center">
-                  <p className="text-gray-400">No playlists found matching "{searchQuery}"</p>
-                </div>
-              ) : (
-                <div className="bg-gray-800 rounded-xl p-6 text-center">
-                  <p className="text-gray-400">No playlists yet</p>
-                </div>
-              )
+              <div className="bg-gray-800 rounded-xl p-6 text-center">
+                <p className="text-gray-400">No playlists yet</p>
+              </div>
             )}
 
+            {/* Liked Songs Section */}
+            {likedSongs.length > 0 && (
+              <Link to="/liked-songs">
+                <div className="bg-gradient-to-br from-purple-900 to-blue-800 rounded-xl p-6 hover:opacity-90 transition-opacity">
+                  <div className="flex items-center">
+                    <div className="w-16 h-16 bg-black bg-opacity-30 rounded flex items-center justify-center mr-4">
+                      <FiHeart className="text-white text-2xl" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-lg">Liked Songs</h4>
+                      <p className="text-sm text-gray-200">
+                        {likedSongs.length}{" "}
+                        {likedSongs.length === 1 ? "song" : "songs"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )}
+            {/* Liked Songs List */}
+            {likedSongs.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-4">
+                <h4 className="font-bold text-white mb-3 px-2">
+                  Recently Liked
+                </h4>
+                <div className="max-h-60 overflow-y-auto">
+                  {likedSongs.slice(0, 5).map((songId) => {
+                    const song = getSongDetails(songId);
+                    return (
+                      <div
+                        key={songId}
+                        className="flex items-center p-2 hover:bg-gray-700 rounded"
+                      >
+                        <div className="w-10 h-10 bg-gray-600 rounded mr-3 flex-shrink-0 overflow-hidden">
+                          {song.cover ? (
+                            <img
+                              src={song.cover}
+                              alt={song.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <FiMusic className="text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="truncate">
+                          <p className="text-white font-medium truncate">
+                            {song.title || "Unknown Song"}
+                          </p>
+                          <p className="text-gray-400 text-sm truncate">
+                            {song.artist || "Unknown Artist"}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Podcasts Section */}
             <div className="bg-gray-800 rounded-xl p-6 hover:bg-gray-700 transition-all duration-200">
               <h4 className="font-bold mb-4 text-lg">
                 Let's find podcasts to follow
