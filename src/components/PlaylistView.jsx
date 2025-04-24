@@ -10,6 +10,7 @@ import {
   FiPause,
   FiHeart,
   FiShuffle,
+  FiRepeat,
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -32,6 +33,8 @@ const PlaylistView = () => {
   const [likedSongs, setLikedSongs] = useState([]);
   const [isShuffled, setIsShuffled] = useState(false);
   const [originalQueue, setOriginalQueue] = useState([]);
+  const [hoveredSong, setHoveredSong] = useState(null);
+  const [isRepeatOn, setIsRepeatOn] = useState(false);
 
   useEffect(() => {
     const playlists = JSON.parse(localStorage.getItem("playlists")) || [];
@@ -53,13 +56,12 @@ const PlaylistView = () => {
           })
           .filter((song) => song !== undefined);
         setQueue(initialQueue);
-        setOriginalQueue(initialQueue); // Save the original order
+        setOriginalQueue(initialQueue);
       }
     } else {
       navigate("/");
     }
 
-    // Load liked songs from musicAppLikes
     const musicAppLikes = JSON.parse(localStorage.getItem("musicAppLikes")) || {
       playlists: [],
       songs: [],
@@ -75,14 +77,12 @@ const PlaylistView = () => {
     const songIndex = musicAppLikes.songs.findIndex((id) => id === songId);
 
     if (songIndex === -1) {
-      // Add to liked songs
       musicAppLikes.songs.push(songId);
       toast.success("Added to Liked Songs", {
         position: "top-right",
         autoClose: 2000,
       });
     } else {
-      // Remove from liked songs
       musicAppLikes.songs.splice(songIndex, 1);
       toast.info("Removed from Liked Songs", {
         position: "top-right",
@@ -133,18 +133,20 @@ const PlaylistView = () => {
   const playSong = (songId) => {
     const songToPlay = songsData.songs.find((s) => s.id === songId);
     if (songToPlay) {
-      if (currentTrack?.id === songId && isPlaying) {
-        setIsPlaying(false);
-        setShowQueueSidebar(false);
-      } else {
-        const songIndex = queue.findIndex((song) => song.id === songId);
-        if (songIndex !== -1) {
+      const songIndex = queue.findIndex((song) => song.id === songId);
+      
+      if (songIndex !== -1) {
+        if (currentTrack?.id === songId) {
+          // Toggle play/pause if clicking the same song
+          setIsPlaying(!isPlaying);
+        } else {
+          // Play the new song
           setCurrentSongIndex(songIndex);
           setCurrentTrack(songToPlay);
           setIsPlaying(true);
-          setShowPlayer(true);
-          setShowQueueSidebar(true);
         }
+        setShowPlayer(true);
+        setShowQueueSidebar(true);
       }
     }
   };
@@ -155,9 +157,15 @@ const PlaylistView = () => {
         (s) => s.id === playlist.songs[0].id
       );
       if (firstSong) {
-        setCurrentSongIndex(0);
-        setCurrentTrack(firstSong);
-        setIsPlaying(true);
+        if (currentTrack?.id === firstSong.id) {
+          // Toggle play/pause if already playing the first song
+          setIsPlaying(!isPlaying);
+        } else {
+          // Start playing from the beginning
+          setCurrentSongIndex(0);
+          setCurrentTrack(firstSong);
+          setIsPlaying(true);
+        }
         setShowPlayer(true);
         setShowQueueSidebar(true);
       }
@@ -165,6 +173,12 @@ const PlaylistView = () => {
   };
 
   const handleNextSong = () => {
+    if (isRepeatOn) {
+      // If repeat is on, restart the current song
+      restartCurrentSong();
+      return;
+    }
+
     if (currentSongIndex < queue.length - 1) {
       const nextIndex = currentSongIndex + 1;
       setCurrentSongIndex(nextIndex);
@@ -188,9 +202,7 @@ const PlaylistView = () => {
 
   const toggleShuffle = () => {
     if (isShuffled) {
-      // Restore original order
       setQueue([...originalQueue]);
-      // Find the current track in the original queue to update the index
       const currentIndex = originalQueue.findIndex(
         (song) => song.id === currentTrack?.id
       );
@@ -198,13 +210,11 @@ const PlaylistView = () => {
         setCurrentSongIndex(currentIndex);
       }
     } else {
-      // Shuffle the remaining songs (keep current song in place)
       if (queue.length > 1) {
         const currentSong = queue[currentSongIndex];
         const remainingSongs = [...queue];
         remainingSongs.splice(currentSongIndex, 1);
 
-        // Fisher-Yates shuffle algorithm
         for (let i = remainingSongs.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [remainingSongs[i], remainingSongs[j]] = [
@@ -213,7 +223,6 @@ const PlaylistView = () => {
           ];
         }
 
-        // Insert current song back at its position
         const newQueue = [
           ...remainingSongs.slice(0, currentSongIndex),
           currentSong,
@@ -224,6 +233,18 @@ const PlaylistView = () => {
       }
     }
     setIsShuffled(!isShuffled);
+  };
+
+  const toggleRepeat = () => {
+    setIsRepeatOn(!isRepeatOn);
+  };
+
+  const restartCurrentSong = () => {
+    if (currentTrack) {
+      // Create a new object to force re-render in the MusicPlayer component
+      setCurrentTrack({...currentTrack});
+      setIsPlaying(true);
+    }
   };
 
   if (!playlist) return null;
@@ -249,7 +270,7 @@ const PlaylistView = () => {
 
           {/* Playlist Header */}
           <div className="flex flex-col md:flex-row items-start mb-8 gap-6">
-            <div className="w-full md:w-48 h-48 bg-gray-800 rounded-lg shadow-lg flex items-center justify-center shrink-0">
+            <div className="w-full md:w-48 h-48 bg-gray-800 rounded-lg shadow-lg flex items-center justify-center shrink-0 relative group">
               {playlist.coverImage ? (
                 <img
                   src={playlist.coverImage}
@@ -259,6 +280,18 @@ const PlaylistView = () => {
               ) : (
                 <FiMusic className="text-gray-500 text-6xl" />
               )}
+              <button
+                onClick={playAllSongs}
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
+              >
+                <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-700 transition-colors hover:scale-105">
+                  {isPlaying && currentTrack && currentTrack.id === playlist.songs[0]?.id ? (
+                    <FiPause size={28} />
+                  ) : (
+                    <FiPlay size={28} className="ml-1" />
+                  )}
+                </div>
+              </button>
             </div>
             <div className="flex-1 w-full">
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 gap-4">
@@ -365,13 +398,13 @@ const PlaylistView = () => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={playAllSongs}
-                  className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-700 transition-colors hover:scale-105"
-                  aria-label="Play all songs"
+                  className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-700 transition-colors hover:scale-105"
+                  aria-label={isPlaying ? "Pause all" : "Play all"}
                 >
                   {isPlaying && currentTrack ? (
-                    <FiPause size={24} />
+                    <FiPause size={28} />
                   ) : (
-                    <FiPlay size={24} className="ml-1" />
+                    <FiPlay size={28} className="ml-1" />
                   )}
                 </button>
                 <h3 className="text-xl font-bold">Songs</h3>
@@ -408,6 +441,8 @@ const PlaylistView = () => {
                         isCurrentPlaying ? "bg-gray-800" : "bg-gray-800/50"
                       }`}
                       onClick={() => playSong(song.id)}
+                      onMouseEnter={() => setHoveredSong(song.id)}
+                      onMouseLeave={() => setHoveredSong(null)}
                     >
                       <div className="col-span-1 flex justify-center">
                         {isCurrentPlaying ? (
@@ -429,6 +464,20 @@ const PlaylistView = () => {
                               style={{ animationDelay: "450ms" }}
                             ></div>
                           </div>
+                        ) : hoveredSong === song.id ? (
+                          <button
+                            className="text-green-500 hover:text-green-400 hover:scale-110 transition-transform"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playSong(song.id);
+                            }}
+                          >
+                            {currentTrack?.id === song.id && isPlaying ? (
+                              <FiPause size={18} />
+                            ) : (
+                              <FiPlay size={18} />
+                            )}
+                          </button>
                         ) : (
                           <span className="text-gray-500">{index + 1}</span>
                         )}
@@ -509,11 +558,14 @@ const PlaylistView = () => {
             queue={queue}
             currentSongIndex={currentSongIndex}
             setCurrentSongIndex={setCurrentSongIndex}
+            isRepeatOn={isRepeatOn}
+            toggleRepeat={toggleRepeat}
+            restartCurrentSong={restartCurrentSong}
           />
         )}
       </div>
 
-      {/* Queue Sidebar - Only shown when a song is playing */}
+      {/* Queue Sidebar */}
       {showQueueSidebar && currentTrack && (
         <div className="w-80 bg-gray-900 border-l border-gray-800 flex flex-col">
           <div className="p-4 border-b border-gray-800">
@@ -536,12 +588,29 @@ const PlaylistView = () => {
             </div>
             <div className="flex justify-between items-center text-sm text-gray-400">
               <span>From: {playlist.name}</span>
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="text-white p-2 rounded-full bg-green-600 hover:bg-green-700"
-              >
-                {isPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleRepeat}
+                  className={`p-2 rounded-full ${
+                    isRepeatOn
+                      ? "text-green-500"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                  aria-label={isRepeatOn ? "Turn off repeat" : "Turn on repeat"}
+                >
+                  <FiRepeat
+                    size={16}
+                    className={isRepeatOn ? "fill-current" : ""}
+                  />
+                </button>
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="text-white p-2 rounded-full bg-green-600 hover:bg-green-700"
+                  aria-label={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}
+                </button>
+              </div>
             </div>
           </div>
 
