@@ -349,7 +349,7 @@ const PlaylistView = () => {
                         {songDetails?.album || 'Unknown Album'}
                       </div>
                       
-                      <div className="col-span-1 flex items-center justify-end gap-3">
+                      <div className="col-span-1 flex items-center justify-end gap-2">
                         <button
                           className={`p-1 rounded-full ${isLiked ? 'text-green-500' : 'text-gray-400 hover:text-white'}`}
                           onClick={(e) => {
@@ -360,19 +360,9 @@ const PlaylistView = () => {
                         >
                           <FiHeart className={isLiked ? 'fill-current' : ''} />
                         </button>
-                        <span className="text-gray-400 text-sm">
+                        <span className="text-gray-400 text-sm min-w-[40px] text-right">
                           {songDetails?.duration || '0:00'}
                         </span>
-                        <button 
-                          className="text-gray-400 hover:text-white p-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            playSong(song.id);
-                          }}
-                          aria-label={isCurrentPlaying ? "Pause" : "Play"}
-                        >
-                          {isCurrentPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}
-                        </button>
                       </div>
                     </div>
                   );
