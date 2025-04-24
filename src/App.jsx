@@ -1,4 +1,3 @@
-// App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
@@ -12,16 +11,28 @@ import CreatePlaylist from './components/CreatePlaylist';
 import PlaylistView from './components/PlaylistView';
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Initialize state from localStorage
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
 
+  // Effect to check authentication status whenever it changes
   useEffect(() => {
-    // Check if user is authenticated on initial load
-    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-    setIsAuthenticated(authStatus);
+    const handleStorageChange = () => {
+      setIsAuthenticated(localStorage.getItem('isAuthenticated') === 'true');
+    };
+
+    // Listen for changes in localStorage
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('currentuser');
     setIsAuthenticated(false);
   };
 
@@ -30,15 +41,17 @@ const App = () => {
       {isAuthenticated ? (
         <div className="flex h-screen bg-black text-white">
           <Sidebar onLogout={handleLogout} />
-          <Routes>
-            <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/playlist/:playlistId" element={<Playlist />} />
-              <Route path="/singer/:singerId" element={<Singer />} />
-              <Route path="/create-playlist" element={<CreatePlaylist />} />
-              <Route path="/savedplaylist/:id" element={<PlaylistView />} />
-            </Route>
-          </Routes>
+          <div className="flex-1 overflow-y-auto">
+            <Routes>
+              <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/playlist/:playlistId" element={<Playlist />} />
+                <Route path="/singer/:singerId" element={<Singer />} />
+                <Route path="/create-playlist" element={<CreatePlaylist />} />
+                <Route path="/savedplaylist/:id" element={<PlaylistView />} />
+              </Route>
+            </Routes>
+          </div>
         </div>
       ) : (
         <Routes>
