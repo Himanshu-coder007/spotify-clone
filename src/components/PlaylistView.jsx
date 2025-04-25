@@ -119,28 +119,38 @@ const PlaylistView = () => {
 
     if (songIndex === -1) {
       // Add to liked songs and move to top of playlist
-      musicAppLikes.songs.push(formattedSongId);
+      musicAppLikes.songs.unshift(formattedSongId); // Add to beginning of array
       toast.success("Added to Liked Songs", {
         position: "top-right",
         autoClose: 2000,
       });
       
-      // Reorder playlist to put liked songs first
+      // Reorder playlist to put liked songs first in the order they were liked (newest first)
       const playlists = JSON.parse(localStorage.getItem("playlists")) || [];
       const updatedPlaylists = playlists.map((p) => {
         if (p.id === parseInt(id)) {
-          // Separate liked and unliked songs
-          const liked = p.songs.filter(song => 
-            musicAppLikes.songs.includes(`song-${getSongIdNumber(song.id)}`)
-          );
-          const unliked = p.songs.filter(song => 
-            !musicAppLikes.songs.includes(`song-${getSongIdNumber(song.id)}`)
+          // Create a new array with liked songs in the order they appear in musicAppLikes.songs
+          const likedSongsOrder = musicAppLikes.songs.map(likedId => 
+            likedId.replace('song-', '')
           );
           
-          // Return new playlist with liked songs first
+          // Separate all songs into liked and unliked
+          const allSongs = [...p.songs];
+          
+          // Sort songs according to the liked order (newest likes first)
+          const sortedSongs = [...allSongs].sort((a, b) => {
+            const aIndex = likedSongsOrder.indexOf(a.id.toString());
+            const bIndex = likedSongsOrder.indexOf(b.id.toString());
+            
+            if (aIndex === -1 && bIndex === -1) return 0;
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+            return aIndex - bIndex;
+          });
+
           return {
             ...p,
-            songs: [...liked, ...unliked]
+            songs: sortedSongs
           };
         }
         return p;
