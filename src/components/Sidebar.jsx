@@ -21,27 +21,31 @@ const Sidebar = ({ onLogout }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [filteredPlaylists, setFilteredPlaylists] = useState([]);
   const [likedSongs, setLikedSongs] = useState([]);
+  const [likedPlaylists, setLikedPlaylists] = useState([]);
   const [allSongs, setAllSongs] = useState(songsData.songs);
   const location = useLocation();
 
   // Function to load playlists and liked songs from localStorage
   const loadData = () => {
     try {
-      const savedPlaylists =
-        JSON.parse(localStorage.getItem("playlists")) || [];
+      const savedPlaylists = JSON.parse(localStorage.getItem("playlists")) || [];
       setPlaylists(savedPlaylists);
       setFilteredPlaylists(savedPlaylists);
 
-      // Updated to use musicAppLikes instead of collections
-      const musicAppLikes = JSON.parse(
-        localStorage.getItem("musicAppLikes")
-      ) || { playlists: [], songs: [] };
+      const musicAppLikes = JSON.parse(localStorage.getItem("musicAppLikes")) || { 
+        playlists: [], 
+        songs: [] 
+      };
+      
+      // Get liked songs and playlists
       setLikedSongs(musicAppLikes.songs || []);
+      setLikedPlaylists(musicAppLikes.playlists || []);
     } catch (error) {
       console.error("Error loading data:", error);
       setPlaylists([]);
       setFilteredPlaylists([]);
       setLikedSongs([]);
+      setLikedPlaylists([]);
     }
   };
 
@@ -66,8 +70,8 @@ const Sidebar = ({ onLogout }) => {
   // Also listen for custom events if data is updated within the same window
   useEffect(() => {
     const handleCustomEvent = () => loadData();
-    window.addEventListener("likesUpdated", handleCustomEvent);
-    return () => window.removeEventListener("likesUpdated", handleCustomEvent);
+    window.addEventListener("playlistsUpdated", handleCustomEvent);
+    return () => window.removeEventListener("playlistsUpdated", handleCustomEvent);
   }, []);
 
   // Filter playlists when search query changes
@@ -117,7 +121,56 @@ const Sidebar = ({ onLogout }) => {
 
   // Get song details by ID
   const getSongDetails = (songId) => {
-    return allSongs.find((song) => song.id === songId) || {};
+    // Extract the index from the songId (format: "song-{index}")
+    const index = parseInt(songId.replace("song-", ""));
+    return songsData.songs[index] || {};
+  };
+
+  // Featured playlists data (same as in Home.jsx)
+  const featuredPlaylists = [
+    {
+      id: "playlist-1",
+      name: "Top 50 Global",
+      images: [{ url: "/img8.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-2",
+      name: "Top 50 India",
+      images: [{ url: "/img9.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-3",
+      name: "Trending India",
+      images: [{ url: "/img10.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-4",
+      name: "Trending Global",
+      images: [{ url: "/img16.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-5",
+      name: "Mega Hits",
+      images: [{ url: "/img11.jpg" }],
+      tracks: { total: 50 },
+    },
+    {
+      id: "playlist-6",
+      name: "Happy Favorites",
+      images: [{ url: "/img15.jpg" }],
+      tracks: { total: 50 },
+    },
+  ];
+
+  // Get liked playlists from featured playlists
+  const getLikedPlaylists = () => {
+    return featuredPlaylists.filter(playlist => 
+      likedPlaylists.includes(playlist.id)
+    );
   };
 
   return (
@@ -211,6 +264,8 @@ const Sidebar = ({ onLogout }) => {
                 </button>
               </div>
             </Link>
+
+            
 
             {/* User Playlists */}
             {filteredPlaylists.length > 0 ? (
@@ -372,6 +427,40 @@ const Sidebar = ({ onLogout }) => {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Liked Playlists Section */}
+            {likedPlaylists.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-4">
+                <h4 className="font-bold text-white mb-3 px-2">Liked Playlists</h4>
+                <div className="space-y-2">
+                  {getLikedPlaylists().map((playlist) => (
+                    <Link 
+                      key={playlist.id} 
+                      to={`/playlist/${playlist.id}`}
+                      className="group relative hover:bg-gray-700 rounded-lg transition-all duration-200 block"
+                    >
+                      <div className="p-3 flex items-center">
+                        <div className="w-12 h-12 bg-gray-700 rounded mr-3 overflow-hidden">
+                          <img
+                            src={playlist.images[0].url}
+                            alt={playlist.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-white truncate">
+                            {playlist.name}
+                          </h4>
+                          <p className="text-sm text-gray-400 truncate">
+                            {playlist.tracks.total} tracks
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}

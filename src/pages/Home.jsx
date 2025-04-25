@@ -62,6 +62,8 @@ const Home = () => {
   // Save liked items to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem("musicAppLikes", JSON.stringify(likedItems));
+    // Dispatch event to notify other components about the update
+    window.dispatchEvent(new Event('playlistsUpdated'));
   }, [likedItems]);
 
   // Animation frames for the equalizer bars

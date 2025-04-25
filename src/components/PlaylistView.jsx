@@ -36,48 +36,89 @@ const PlaylistView = () => {
   const [hoveredSong, setHoveredSong] = useState(null);
   const [isRepeatOn, setIsRepeatOn] = useState(false);
 
-  useEffect(() => {
-    const playlists = JSON.parse(localStorage.getItem("playlists")) || [];
-    const foundPlaylist = playlists.find((p) => p.id === parseInt(id));
-
-    if (foundPlaylist) {
-      setPlaylist(foundPlaylist);
-      setName(foundPlaylist.name);
-      setDescription(foundPlaylist.description);
-
-      if (foundPlaylist.songs.length > 0) {
-        const firstSong = songsData.songs.find(
-          (s) => s.id === foundPlaylist.songs[0].id
-        );
-        setCurrentTrack(firstSong || null);
-        const initialQueue = foundPlaylist.songs
-          .map((song) => {
-            return songsData.songs.find((s) => s.id === song.id);
-          })
-          .filter((song) => song !== undefined);
-        setQueue(initialQueue);
-        setOriginalQueue(initialQueue);
-      }
-    } else {
-      navigate("/");
+  // Helper function to get numeric ID from song ID string
+  const getSongIdNumber = (songId) => {
+    if (typeof songId === 'string' && songId.startsWith('song-')) {
+      return parseInt(songId.replace('song-', ''));
     }
+    return songId;
+  };
 
-    const musicAppLikes = JSON.parse(localStorage.getItem("musicAppLikes")) || {
-      playlists: [],
-      songs: [],
+  // Load playlist and liked songs data
+  useEffect(() => {
+    const loadData = () => {
+      const playlists = JSON.parse(localStorage.getItem("playlists")) || [];
+      const foundPlaylist = playlists.find((p) => p.id === parseInt(id));
+
+      if (foundPlaylist) {
+        setPlaylist(foundPlaylist);
+        setName(foundPlaylist.name);
+        setDescription(foundPlaylist.description);
+
+        if (foundPlaylist.songs.length > 0) {
+          const firstSong = songsData.songs.find(
+            (s) => s.id === getSongIdNumber(foundPlaylist.songs[0].id)
+          );
+          setCurrentTrack(firstSong || null);
+          const initialQueue = foundPlaylist.songs
+            .map((song) => {
+              return songsData.songs.find((s) => s.id === getSongIdNumber(song.id));
+            })
+            .filter((song) => song !== undefined);
+          setQueue(initialQueue);
+          setOriginalQueue(initialQueue);
+        }
+      } else {
+        navigate("/");
+      }
+
+      const musicAppLikes = JSON.parse(localStorage.getItem("musicAppLikes")) || {
+        playlists: [],
+        songs: [],
+      };
+      setLikedSongs(musicAppLikes.songs || []);
     };
-    setLikedSongs(musicAppLikes.songs || []);
+
+    loadData();
+
+    // Set up event listener for storage changes
+    const handleStorageChange = (e) => {
+      if (e.key === "songs" || e.key === "musicAppLikes") {
+        loadData();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, [id, navigate]);
+
+  // Also listen for custom events if data is updated within the same window
+  useEffect(() => {
+    const handleCustomEvent = () => {
+      const musicAppLikes = JSON.parse(localStorage.getItem("musicAppLikes")) || {
+        playlists: [],
+        songs: [],
+      };
+      setLikedSongs(musicAppLikes.songs || []);
+    };
+
+    window.addEventListener("likesUpdated", handleCustomEvent);
+    return () => window.removeEventListener("likesUpdated", handleCustomEvent);
+  }, []);
 
   const toggleLikeSong = (songId) => {
     const musicAppLikes = JSON.parse(localStorage.getItem("musicAppLikes")) || {
       playlists: [],
       songs: [],
     };
-    const songIndex = musicAppLikes.songs.findIndex((id) => id === songId);
+    const formattedSongId = `song-${getSongIdNumber(songId)}`;
+    const songIndex = musicAppLikes.songs.findIndex((id) => id === formattedSongId);
 
     if (songIndex === -1) {
-      musicAppLikes.songs.push(songId);
+      musicAppLikes.songs.push(formattedSongId);
       toast.success("Added to Liked Songs", {
         position: "top-right",
         autoClose: 2000,
@@ -131,12 +172,13 @@ const PlaylistView = () => {
   };
 
   const playSong = (songId) => {
-    const songToPlay = songsData.songs.find((s) => s.id === songId);
+    const numericId = getSongIdNumber(songId);
+    const songToPlay = songsData.songs.find((s) => s.id === numericId);
     if (songToPlay) {
-      const songIndex = queue.findIndex((song) => song.id === songId);
+      const songIndex = queue.findIndex((song) => song.id === numericId);
       
       if (songIndex !== -1) {
-        if (currentTrack?.id === songId) {
+        if (currentTrack?.id === numericId) {
           // Toggle play/pause if clicking the same song
           setIsPlaying(!isPlaying);
         } else {
@@ -154,7 +196,7 @@ const PlaylistView = () => {
   const playAllSongs = () => {
     if (playlist?.songs?.length > 0) {
       const firstSong = songsData.songs.find(
-        (s) => s.id === playlist.songs[0].id
+        (s) => s.id === getSongIdNumber(playlist.songs[0].id)
       );
       if (firstSong) {
         if (currentTrack?.id === firstSong.id) {
@@ -285,7 +327,7 @@ const PlaylistView = () => {
                 className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
               >
                 <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-700 transition-colors hover:scale-105">
-                  {isPlaying && currentTrack && currentTrack.id === playlist.songs[0]?.id ? (
+                  {isPlaying && currentTrack && currentTrack.id === getSongIdNumber(playlist.songs[0]?.id) ? (
                     <FiPause size={28} />
                   ) : (
                     <FiPlay size={28} className="ml-1" />
@@ -428,11 +470,11 @@ const PlaylistView = () => {
               <div className="space-y-1 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
                 {playlist.songs.map((song, index) => {
                   const songDetails = songsData.songs.find(
-                    (s) => s.id === song.id
+                    (s) => s.id === getSongIdNumber(song.id)
                   );
                   const isCurrentPlaying =
-                    currentTrack?.id === song.id && isPlaying;
-                  const isLiked = likedSongs.includes(song.id);
+                    currentTrack?.id === getSongIdNumber(song.id) && isPlaying;
+                  const isLiked = likedSongs.includes(`song-${getSongIdNumber(song.id)}`);
 
                   return (
                     <div
@@ -472,7 +514,7 @@ const PlaylistView = () => {
                               playSong(song.id);
                             }}
                           >
-                            {currentTrack?.id === song.id && isPlaying ? (
+                            {currentTrack?.id === getSongIdNumber(song.id) && isPlaying ? (
                               <FiPause size={18} />
                             ) : (
                               <FiPlay size={18} />
@@ -642,34 +684,53 @@ const PlaylistView = () => {
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             {queue.length > currentSongIndex + 1 ? (
               <div className="divide-y divide-gray-800">
-                {queue.slice(currentSongIndex + 1).map((song, index) => (
-                  <div
-                    key={`${song.id}-${index}`}
-                    className="p-3 hover:bg-gray-800 cursor-pointer flex items-center gap-3"
-                    onClick={() => {
-                      const actualIndex = currentSongIndex + 1 + index;
-                      setCurrentSongIndex(actualIndex);
-                      setCurrentTrack(queue[actualIndex]);
-                      setIsPlaying(true);
-                      setShowPlayer(true);
-                    }}
-                  >
-                    <img
-                      src={song.cover || "/default-cover.jpg"}
-                      alt={song.title}
-                      className="w-10 h-10 rounded"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium truncate">{song.title}</h4>
-                      <p className="text-sm text-gray-400 truncate">
-                        {song.artist}
-                      </p>
+                {queue.slice(currentSongIndex + 1).map((song, index) => {
+                  const isLiked = likedSongs.includes(`song-${song.id}`);
+                  return (
+                    <div
+                      key={`${song.id}-${index}`}
+                      className="p-3 hover:bg-gray-800 cursor-pointer flex items-center gap-3"
+                      onClick={() => {
+                        const actualIndex = currentSongIndex + 1 + index;
+                        setCurrentSongIndex(actualIndex);
+                        setCurrentTrack(queue[actualIndex]);
+                        setIsPlaying(true);
+                        setShowPlayer(true);
+                      }}
+                    >
+                      <img
+                        src={song.cover || "/default-cover.jpg"}
+                        alt={song.title}
+                        className="w-10 h-10 rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{song.title}</h4>
+                        <p className="text-sm text-gray-400 truncate">
+                          {song.artist}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          className={`p-1 rounded-full ${
+                            isLiked
+                              ? "text-green-500"
+                              : "text-gray-400 hover:text-white"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLikeSong(song.id);
+                          }}
+                          aria-label={isLiked ? "Unlike song" : "Like song"}
+                        >
+                          <FiHeart className={isLiked ? "fill-current" : ""} />
+                        </button>
+                        <span className="text-sm text-gray-400">
+                          {song.duration || "0:00"}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-sm text-gray-400">
-                      {song.duration || "0:00"}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="p-4 text-center text-gray-500">
