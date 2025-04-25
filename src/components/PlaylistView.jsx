@@ -83,7 +83,7 @@ const PlaylistView = () => {
 
     // Set up event listener for storage changes
     const handleStorageChange = (e) => {
-      if (e.key === "songs" || e.key === "musicAppLikes") {
+      if (e.key === "playlists" || e.key === "musicAppLikes") {
         loadData();
       }
     };
@@ -118,12 +118,53 @@ const PlaylistView = () => {
     const songIndex = musicAppLikes.songs.findIndex((id) => id === formattedSongId);
 
     if (songIndex === -1) {
+      // Add to liked songs and move to top of playlist
       musicAppLikes.songs.push(formattedSongId);
       toast.success("Added to Liked Songs", {
         position: "top-right",
         autoClose: 2000,
       });
+      
+      // Reorder playlist to put liked songs first
+      const playlists = JSON.parse(localStorage.getItem("playlists")) || [];
+      const updatedPlaylists = playlists.map((p) => {
+        if (p.id === parseInt(id)) {
+          // Separate liked and unliked songs
+          const liked = p.songs.filter(song => 
+            musicAppLikes.songs.includes(`song-${getSongIdNumber(song.id)}`)
+          );
+          const unliked = p.songs.filter(song => 
+            !musicAppLikes.songs.includes(`song-${getSongIdNumber(song.id)}`)
+          );
+          
+          // Return new playlist with liked songs first
+          return {
+            ...p,
+            songs: [...liked, ...unliked]
+          };
+        }
+        return p;
+      });
+
+      localStorage.setItem("playlists", JSON.stringify(updatedPlaylists));
+      setPlaylist(updatedPlaylists.find((p) => p.id === parseInt(id)));
+      
+      // Update queue as well
+      const newQueue = updatedPlaylists.find((p) => p.id === parseInt(id)).songs
+        .map((song) => songsData.songs.find((s) => s.id === getSongIdNumber(song.id)))
+        .filter((song) => song !== undefined);
+      setQueue(newQueue);
+      setOriginalQueue(newQueue);
+      
+      // Update current song index if needed
+      if (currentTrack) {
+        const newIndex = newQueue.findIndex(song => song.id === currentTrack.id);
+        if (newIndex !== -1) {
+          setCurrentSongIndex(newIndex);
+        }
+      }
     } else {
+      // Remove from liked songs (no need to reorder playlist)
       musicAppLikes.songs.splice(songIndex, 1);
       toast.info("Removed from Liked Songs", {
         position: "top-right",

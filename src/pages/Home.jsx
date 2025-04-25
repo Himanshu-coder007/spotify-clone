@@ -366,126 +366,101 @@ const Home = () => {
     <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12 pb-32">
       {/* Top Navigation Bar */}
       <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center space-x-4">
-          <div className="relative" ref={searchRef}>
-            <div className="flex items-center bg-gray-800 rounded-full px-4 py-2 w-64 focus-within:ring-2 focus-within:ring-white focus-within:ring-opacity-50">
-              <FaSearch className="text-gray-400 mr-2" />
-              <input
-                type="text"
-                placeholder="Search for songs, artists, albums..."
-                className="bg-transparent border-none outline-none text-white placeholder-gray-400 w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => searchQuery.trim() !== "" && setShowSearchResults(true)}
-              />
-            </div>
-            
-            {showSearchResults && (
-              <div className="absolute top-12 left-0 w-96 bg-gray-800 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
-                {searchResults.songs.length > 0 && (
-                  <div className="p-2">
-                    <h3 className="text-gray-400 text-sm font-semibold px-3 py-1">Songs</h3>
-                    {searchResults.songs.map((song, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center p-3 hover:bg-gray-700 rounded-lg cursor-pointer"
-                        onClick={() => handleSearchItemClick("song", song, index)}
-                      >
-                        <img
-                          src={song.cover}
-                          alt={song.title}
-                          className="w-10 h-10 rounded-md mr-3"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white truncate font-medium">{song.title}</p>
-                          <p className="text-gray-400 text-sm truncate">
-                            {song.artist} • {song.album}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {searchResults.playlists.length > 0 && (
-                  <div className="p-2">
-                    <h3 className="text-gray-400 text-sm font-semibold px-3 py-1">Playlists</h3>
-                    {searchResults.playlists.map((playlist, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center p-3 hover:bg-gray-700 rounded-lg cursor-pointer"
-                        onClick={() => handleSearchItemClick("playlist", playlist, index)}
-                      >
-                        <img
-                          src={playlist.images[0].url}
-                          alt={playlist.name}
-                          className="w-10 h-10 rounded-md mr-3"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white truncate font-medium">{playlist.name}</p>
-                          <p className="text-gray-400 text-sm truncate">
-                            {playlist.tracks.total} tracks
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {searchResults.artists.length > 0 && (
-                  <div className="p-2">
-                    <h3 className="text-gray-400 text-sm font-semibold px-3 py-1">Artists</h3>
-                    {searchResults.artists.map((artist, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center p-3 hover:bg-gray-700 rounded-lg cursor-pointer"
-                        onClick={() => handleSearchItemClick("artist", artist, index)}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center mr-3">
-                          <FaUserCircle className="text-xl text-gray-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white truncate font-medium">{artist}</p>
-                          <p className="text-gray-400 text-sm truncate">Artist</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {searchResults.songs.length === 0 &&
-                  searchResults.playlists.length === 0 &&
-                  searchResults.artists.length === 0 && (
-                    <div className="p-4 text-center text-gray-400">
-                      No results found for "{searchQuery}"
-                    </div>
-                  )}
-              </div>
-            )}
+        <div className="relative" ref={searchRef}>
+          <div className="flex items-center bg-gray-800 rounded-full px-4 py-2 w-64 focus-within:ring-2 focus-within:ring-white focus-within:ring-opacity-50">
+            <FaSearch className="text-gray-400 mr-2" />
+            <input
+              type="text"
+              placeholder="Search for songs, artists, albums..."
+              className="bg-transparent border-none outline-none text-white placeholder-gray-400 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => searchQuery.trim() !== "" && setShowSearchResults(true)}
+            />
           </div>
           
-          <div className="flex space-x-4">
-            <button
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                activeFilter === "all"
-                  ? "bg-white text-black"
-                  : "bg-gray-800 text-white hover:bg-gray-700"
-              }`}
-              onClick={() => setActiveFilter("all")}
-            >
-              All
-            </button>
-            <button
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                activeFilter === "liked"
-                  ? "bg-white text-black"
-                  : "bg-gray-800 text-white hover:bg-gray-700"
-              }`}
-              onClick={() => setActiveFilter("liked")}
-            >
-              Liked
-            </button>
-          </div>
+          {showSearchResults && (
+            <div className="absolute top-12 left-0 w-96 bg-gray-800 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
+              {searchResults.songs.length > 0 && (
+                <div className="p-2">
+                  <h3 className="text-gray-400 text-sm font-semibold px-3 py-1">Songs</h3>
+                  {searchResults.songs.map((song, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-3 hover:bg-gray-700 rounded-lg cursor-pointer"
+                      onClick={() => handleSearchItemClick("song", song, index)}
+                    >
+                      <img
+                        src={song.cover}
+                        alt={song.title}
+                        className="w-10 h-10 rounded-md mr-3"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white truncate font-medium">{song.title}</p>
+                        <p className="text-gray-400 text-sm truncate">
+                          {song.artist} • {song.album}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {searchResults.playlists.length > 0 && (
+                <div className="p-2">
+                  <h3 className="text-gray-400 text-sm font-semibold px-3 py-1">Playlists</h3>
+                  {searchResults.playlists.map((playlist, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-3 hover:bg-gray-700 rounded-lg cursor-pointer"
+                      onClick={() => handleSearchItemClick("playlist", playlist, index)}
+                    >
+                      <img
+                        src={playlist.images[0].url}
+                        alt={playlist.name}
+                        className="w-10 h-10 rounded-md mr-3"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white truncate font-medium">{playlist.name}</p>
+                        <p className="text-gray-400 text-sm truncate">
+                          {playlist.tracks.total} tracks
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {searchResults.artists.length > 0 && (
+                <div className="p-2">
+                  <h3 className="text-gray-400 text-sm font-semibold px-3 py-1">Artists</h3>
+                  {searchResults.artists.map((artist, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-3 hover:bg-gray-700 rounded-lg cursor-pointer"
+                      onClick={() => handleSearchItemClick("artist", artist, index)}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center mr-3">
+                        <FaUserCircle className="text-xl text-gray-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white truncate font-medium">{artist}</p>
+                        <p className="text-gray-400 text-sm truncate">Artist</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {searchResults.songs.length === 0 &&
+                searchResults.playlists.length === 0 &&
+                searchResults.artists.length === 0 && (
+                  <div className="p-4 text-center text-gray-400">
+                    No results found for "{searchQuery}"
+                  </div>
+                )}
+            </div>
+          )}
         </div>
         
         <div className="flex items-center space-x-4">
