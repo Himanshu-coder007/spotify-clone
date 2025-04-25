@@ -59,6 +59,7 @@ const App = () => {
                 <Route path="/create-playlist" element={<CreatePlaylist />} />
                 <Route path="/savedplaylist/:id" element={<PlaylistView />} />
                 <Route path="/premium" element={<Premium />} />
+                <Route path="/liked-songs" element={<Premium />} />
               </Route>
             </Routes>
           </div>

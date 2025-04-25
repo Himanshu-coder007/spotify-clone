@@ -11,6 +11,9 @@ import {
   FiHeart,
   FiShuffle,
   FiRepeat,
+  FiClock,
+  FiPlus,
+  FiMoreHorizontal
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -118,26 +121,21 @@ const PlaylistView = () => {
     const songIndex = musicAppLikes.songs.findIndex((id) => id === formattedSongId);
 
     if (songIndex === -1) {
-      // Add to liked songs and move to top of playlist
-      musicAppLikes.songs.unshift(formattedSongId); // Add to beginning of array
+      musicAppLikes.songs.unshift(formattedSongId);
       toast.success("Added to Liked Songs", {
         position: "top-right",
         autoClose: 2000,
       });
       
-      // Reorder playlist to put liked songs first in the order they were liked (newest first)
       const playlists = JSON.parse(localStorage.getItem("playlists")) || [];
       const updatedPlaylists = playlists.map((p) => {
         if (p.id === parseInt(id)) {
-          // Create a new array with liked songs in the order they appear in musicAppLikes.songs
           const likedSongsOrder = musicAppLikes.songs.map(likedId => 
             likedId.replace('song-', '')
           );
           
-          // Separate all songs into liked and unliked
           const allSongs = [...p.songs];
           
-          // Sort songs according to the liked order (newest likes first)
           const sortedSongs = [...allSongs].sort((a, b) => {
             const aIndex = likedSongsOrder.indexOf(a.id.toString());
             const bIndex = likedSongsOrder.indexOf(b.id.toString());
@@ -159,14 +157,12 @@ const PlaylistView = () => {
       localStorage.setItem("playlists", JSON.stringify(updatedPlaylists));
       setPlaylist(updatedPlaylists.find((p) => p.id === parseInt(id)));
       
-      // Update queue as well
       const newQueue = updatedPlaylists.find((p) => p.id === parseInt(id)).songs
         .map((song) => songsData.songs.find((s) => s.id === getSongIdNumber(song.id)))
         .filter((song) => song !== undefined);
       setQueue(newQueue);
       setOriginalQueue(newQueue);
       
-      // Update current song index if needed
       if (currentTrack) {
         const newIndex = newQueue.findIndex(song => song.id === currentTrack.id);
         if (newIndex !== -1) {
@@ -174,7 +170,6 @@ const PlaylistView = () => {
         }
       }
     } else {
-      // Remove from liked songs (no need to reorder playlist)
       musicAppLikes.songs.splice(songIndex, 1);
       toast.info("Removed from Liked Songs", {
         position: "top-right",
@@ -230,10 +225,8 @@ const PlaylistView = () => {
       
       if (songIndex !== -1) {
         if (currentTrack?.id === numericId) {
-          // Toggle play/pause if clicking the same song
           setIsPlaying(!isPlaying);
         } else {
-          // Play the new song
           setCurrentSongIndex(songIndex);
           setCurrentTrack(songToPlay);
           setIsPlaying(true);
@@ -251,10 +244,8 @@ const PlaylistView = () => {
       );
       if (firstSong) {
         if (currentTrack?.id === firstSong.id) {
-          // Toggle play/pause if already playing the first song
           setIsPlaying(!isPlaying);
         } else {
-          // Start playing from the beginning
           setCurrentSongIndex(0);
           setCurrentTrack(firstSong);
           setIsPlaying(true);
@@ -267,7 +258,6 @@ const PlaylistView = () => {
 
   const handleNextSong = () => {
     if (isRepeatOn) {
-      // If repeat is on, restart the current song
       restartCurrentSong();
       return;
     }
@@ -334,7 +324,6 @@ const PlaylistView = () => {
 
   const restartCurrentSong = () => {
     if (currentTrack) {
-      // Create a new object to force re-render in the MusicPlayer component
       setCurrentTrack({...currentTrack});
       setIsPlaying(true);
     }
@@ -343,27 +332,29 @@ const PlaylistView = () => {
   if (!playlist) return null;
 
   return (
-    <div className="h-screen bg-black text-white overflow-hidden flex">
+    <div className="h-screen bg-gradient-to-b from-gray-900 to-black text-white overflow-hidden flex">
       <ToastContainer />
 
       {/* Main Content */}
       <div
-        className={`h-screen bg-black text-white overflow-hidden flex flex-col ${
+        className={`h-screen overflow-hidden flex flex-col ${
           showQueueSidebar ? "w-[calc(100vw-360px)]" : "w-full"
         }`}
       >
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
           {/* Back button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
-          >
-            <FiArrowLeft /> Back
-          </button>
+          <div className="flex items-center gap-6 mb-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black bg-opacity-40 hover:bg-opacity-60 transition-all"
+            >
+              <FiArrowLeft size={20} />
+            </button>
+          </div>
 
           {/* Playlist Header */}
           <div className="flex flex-col md:flex-row items-start mb-8 gap-6">
-            <div className="w-full md:w-48 h-48 bg-gray-800 rounded-lg shadow-lg flex items-center justify-center shrink-0 relative group">
+            <div className="w-full md:w-56 h-56 bg-gradient-to-br from-purple-900 to-gray-800 rounded-lg shadow-xl flex items-center justify-center shrink-0 relative group">
               {playlist.coverImage ? (
                 <img
                   src={playlist.coverImage}
@@ -371,64 +362,80 @@ const PlaylistView = () => {
                   className="w-full h-full object-cover rounded-lg"
                 />
               ) : (
-                <FiMusic className="text-gray-500 text-6xl" />
+                <FiMusic className="text-gray-500 text-7xl" />
               )}
               <button
                 onClick={playAllSongs}
                 className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
               >
-                <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-700 transition-colors hover:scale-105">
+                <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center hover:bg-green-400 transition-all hover:scale-105">
                   {isPlaying && currentTrack && currentTrack.id === getSongIdNumber(playlist.songs[0]?.id) ? (
-                    <FiPause size={28} />
+                    <FiPause size={28} className="text-black" />
                   ) : (
-                    <FiPlay size={28} className="ml-1" />
+                    <FiPlay size={28} className="ml-1 text-black" />
                   )}
                 </div>
               </button>
             </div>
             <div className="flex-1 w-full">
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 gap-4">
-                <div className="flex items-center">
-                  <h2 className="text-3xl font-bold mr-3 truncate max-w-xs md:max-w-md">
-                    {playlist.name}
-                  </h2>
-                  <button
-                    onClick={() => setShowEditForm(true)}
-                    className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-gray-800"
-                    aria-label="Edit playlist"
-                  >
-                    <FiEdit size={20} />
-                  </button>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold mb-2">PLAYLIST</span>
+                <h2 className="text-5xl font-bold mb-4 truncate max-w-2xl">{playlist.name}</h2>
+                <p className="text-gray-400 mb-6 line-clamp-2 max-w-2xl">
+                  {playlist.description}
+                </p>
+                <div className="flex items-center text-sm text-gray-400 gap-4">
+                  <span className="font-medium text-white">Your Library</span>
+                  <span>
+                    {playlist.songs.length}{" "}
+                    {playlist.songs.length === 1 ? "song" : "songs"}
+                  </span>
                 </div>
-                <button
-                  onClick={deletePlaylist}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all bg-red-600 hover:bg-red-700"
-                >
-                  <FiTrash2 />
-                  Delete Playlist
-                </button>
-              </div>
-              <p className="text-gray-400 mb-4 line-clamp-2 max-w-2xl">
-                {playlist.description}
-              </p>
-              <div className="flex items-center text-sm text-gray-400">
-                <span>
-                  {playlist.songs.length}{" "}
-                  {playlist.songs.length === 1 ? "song" : "songs"}
-                </span>
               </div>
             </div>
+          </div>
+
+          {/* Playlist Actions */}
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={playAllSongs}
+              className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 hover:bg-green-400 transition-all hover:scale-105"
+              aria-label={isPlaying ? "Pause all" : "Play all"}
+            >
+              {isPlaying && currentTrack ? (
+                <FiPause size={28} className="text-black" />
+              ) : (
+                <FiPlay size={28} className="ml-1 text-black" />
+              )}
+            </button>
+            <button
+              onClick={() => setShowEditForm(true)}
+              className="text-gray-400 hover:text-white transition-colors p-2"
+              aria-label="Edit playlist"
+            >
+              <FiEdit size={24} />
+            </button>
+            <button
+              onClick={deletePlaylist}
+              className="text-gray-400 hover:text-white transition-colors p-2"
+              aria-label="Delete playlist"
+            >
+              <FiTrash2 size={24} />
+            </button>
+            <button className="text-gray-400 hover:text-white transition-colors p-2">
+              <FiMoreHorizontal size={24} />
+            </button>
           </div>
 
           {/* Edit Playlist Modal */}
           {showEditForm && (
             <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-              <div className="bg-gray-900 p-6 rounded-lg max-w-md w-full border border-gray-800 shadow-xl">
+              <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full border border-gray-700 shadow-2xl">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-bold">Edit Playlist</h3>
                   <button
                     onClick={() => setShowEditForm(false)}
-                    className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
+                    className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700 transition-colors"
                   >
                     <FiX size={20} />
                   </button>
@@ -446,7 +453,7 @@ const PlaylistView = () => {
                       id="editName"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500"
                       required
                     />
                   </div>
@@ -461,7 +468,7 @@ const PlaylistView = () => {
                       id="editDescription"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500"
                       rows="3"
                     />
                   </div>
@@ -469,13 +476,13 @@ const PlaylistView = () => {
                     <button
                       type="button"
                       onClick={() => setShowEditForm(false)}
-                      className="px-4 py-2 rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
+                      className="px-4 py-2 rounded-full border border-gray-600 hover:bg-gray-700 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full transition-colors"
+                      className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-full transition-colors font-medium"
                     >
                       Save Changes
                     </button>
@@ -486,39 +493,20 @@ const PlaylistView = () => {
           )}
 
           {/* Playlist Songs */}
-          <div className="bg-gray-900 rounded-xl p-4">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={playAllSongs}
-                  className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-700 transition-colors hover:scale-105"
-                  aria-label={isPlaying ? "Pause all" : "Play all"}
-                >
-                  {isPlaying && currentTrack ? (
-                    <FiPause size={28} />
-                  ) : (
-                    <FiPlay size={28} className="ml-1" />
-                  )}
-                </button>
-                <h3 className="text-xl font-bold">Songs</h3>
-              </div>
-              <span className="text-sm text-gray-400">
-                {playlist.songs.length}{" "}
-                {playlist.songs.length === 1 ? "song" : "songs"}
-              </span>
-            </div>
-
+          <div className="mb-24">
             {/* Songs Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-4 py-2 text-gray-400 text-sm border-b border-gray-800 mb-2">
-              <div className="col-span-1">#</div>
-              <div className="col-span-5">Title</div>
-              <div className="col-span-3">Artist</div>
-              <div className="col-span-2">Album</div>
-              <div className="col-span-1 text-right">Duration</div>
+            <div className="grid grid-cols-12 gap-4 px-4 py-3 text-gray-400 text-sm border-b border-gray-800 mb-2">
+              <div className="col-span-1 flex justify-center">#</div>
+              <div className="col-span-5">TITLE</div>
+              <div className="col-span-3">ARTIST</div>
+              <div className="col-span-2">ALBUM</div>
+              <div className="col-span-1 flex justify-end">
+                <FiClock className="text-gray-400" />
+              </div>
             </div>
 
             {playlist.songs.length > 0 ? (
-              <div className="space-y-1 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+              <div className="space-y-1 max-h-[500px] overflow-y-auto pr-2 scrollbar-hide">
                 {playlist.songs.map((song, index) => {
                   const songDetails = songsData.songs.find(
                     (s) => s.id === getSongIdNumber(song.id)
@@ -530,8 +518,8 @@ const PlaylistView = () => {
                   return (
                     <div
                       key={song.id}
-                      className={`grid grid-cols-12 gap-4 items-center p-3 rounded-lg hover:bg-gray-750 transition-colors cursor-pointer ${
-                        isCurrentPlaying ? "bg-gray-800" : "bg-gray-800/50"
+                      className={`grid grid-cols-12 gap-4 items-center p-3 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer ${
+                        isCurrentPlaying ? "bg-gray-800" : ""
                       }`}
                       onClick={() => playSong(song.id)}
                       onMouseEnter={() => setHoveredSong(song.id)}
@@ -559,7 +547,7 @@ const PlaylistView = () => {
                           </div>
                         ) : hoveredSong === song.id ? (
                           <button
-                            className="text-green-500 hover:text-green-400 hover:scale-110 transition-transform"
+                            className="text-white hover:scale-110 transition-transform"
                             onClick={(e) => {
                               e.stopPropagation();
                               playSong(song.id);
@@ -582,13 +570,18 @@ const PlaylistView = () => {
                           alt={songDetails?.title}
                           className="w-10 h-10 rounded"
                         />
-                        <span
-                          className={`truncate ${
-                            isCurrentPlaying ? "text-green-500" : "text-white"
-                          }`}
-                        >
-                          {songDetails?.title || "Unknown Title"}
-                        </span>
+                        <div className="flex flex-col">
+                          <span
+                            className={`truncate ${
+                              isCurrentPlaying ? "text-green-500" : "text-white"
+                            }`}
+                          >
+                            {songDetails?.title || "Unknown Title"}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {songDetails?.explicit ? "Explicit" : ""}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="col-span-3 text-gray-400 truncate">
@@ -599,9 +592,9 @@ const PlaylistView = () => {
                         {songDetails?.album || "Unknown Album"}
                       </div>
 
-                      <div className="col-span-1 flex items-center justify-end gap-2">
+                      <div className="col-span-1 flex items-center justify-end gap-3">
                         <button
-                          className={`p-1 rounded-full ${
+                          className={`p-1 ${
                             isLiked
                               ? "text-green-500"
                               : "text-gray-400 hover:text-white"
@@ -612,7 +605,7 @@ const PlaylistView = () => {
                           }}
                           aria-label={isLiked ? "Unlike song" : "Like song"}
                         >
-                          <FiHeart className={isLiked ? "fill-current" : ""} />
+                          <FiHeart size={18} className={isLiked ? "fill-current" : ""} />
                         </button>
                         <span className="text-gray-400 text-sm min-w-[40px] text-right">
                           {songDetails?.duration || "0:00"}
@@ -623,9 +616,17 @@ const PlaylistView = () => {
                 })}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
-                <FiMusic className="mx-auto text-4xl mb-2" />
-                <p className="text-lg">This playlist is empty</p>
+              <div className="text-center py-16 text-gray-500">
+                <FiMusic className="mx-auto text-4xl mb-4" />
+                <p className="text-lg mb-2">This playlist is empty</p>
+                <p className="text-sm text-gray-600 mb-6">Add some songs to get started</p>
+                <button
+                  onClick={() => navigate("/search")}
+                  className="px-6 py-2 rounded-full bg-white text-black font-medium hover:scale-105 transition-transform"
+                >
+                  <FiPlus className="inline mr-2" />
+                  Browse Songs
+                </button>
               </div>
             )}
           </div>
@@ -662,7 +663,15 @@ const PlaylistView = () => {
       {showQueueSidebar && currentTrack && (
         <div className="w-80 bg-gray-900 border-l border-gray-800 flex flex-col">
           <div className="p-4 border-b border-gray-800">
-            <h3 className="text-lg font-bold">Now Playing</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold">Now Playing</h3>
+              <button
+                onClick={() => setShowQueueSidebar(false)}
+                className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
           </div>
 
           <div className="p-4 border-b border-gray-800">
@@ -672,15 +681,15 @@ const PlaylistView = () => {
                 alt={currentTrack.title}
                 className="w-16 h-16 rounded"
               />
-              <div>
+              <div className="flex-1 min-w-0">
                 <h4 className="font-medium truncate">{currentTrack.title}</h4>
                 <p className="text-sm text-gray-400 truncate">
                   {currentTrack.artist}
                 </p>
               </div>
             </div>
-            <div className="flex justify-between items-center text-sm text-gray-400">
-              <span>From: {playlist.name}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">From: {playlist.name}</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={toggleRepeat}
@@ -698,7 +707,7 @@ const PlaylistView = () => {
                 </button>
                 <button
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className="text-white p-2 rounded-full bg-green-600 hover:bg-green-700"
+                  className="text-black p-2 rounded-full bg-green-500 hover:bg-green-400"
                   aria-label={isPlaying ? "Pause" : "Play"}
                 >
                   {isPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}
@@ -708,7 +717,7 @@ const PlaylistView = () => {
           </div>
 
           <div className="p-4 border-b border-gray-800">
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center">
               <h3 className="font-medium">Next in Queue</h3>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-400">
@@ -732,7 +741,7 @@ const PlaylistView = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto scrollbar-hide">
+          <div className="flex-1 overflow-y-auto scrollbar-hide pb-4">
             {queue.length > currentSongIndex + 1 ? (
               <div className="divide-y divide-gray-800">
                 {queue.slice(currentSongIndex + 1).map((song, index) => {
@@ -740,7 +749,7 @@ const PlaylistView = () => {
                   return (
                     <div
                       key={`${song.id}-${index}`}
-                      className="p-3 hover:bg-gray-800 cursor-pointer flex items-center gap-3"
+                      className="p-3 hover:bg-gray-800 cursor-pointer flex items-center gap-3 group"
                       onClick={() => {
                         const actualIndex = currentSongIndex + 1 + index;
                         setCurrentSongIndex(actualIndex);
@@ -760,9 +769,9 @@ const PlaylistView = () => {
                           {song.artist}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          className={`p-1 rounded-full ${
+                          className={`p-1 ${
                             isLiked
                               ? "text-green-500"
                               : "text-gray-400 hover:text-white"
@@ -773,7 +782,7 @@ const PlaylistView = () => {
                           }}
                           aria-label={isLiked ? "Unlike song" : "Like song"}
                         >
-                          <FiHeart className={isLiked ? "fill-current" : ""} />
+                          <FiHeart size={18} className={isLiked ? "fill-current" : ""} />
                         </button>
                         <span className="text-sm text-gray-400">
                           {song.duration || "0:00"}
