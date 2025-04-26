@@ -653,14 +653,7 @@ const Home = () => {
                     Help
                   </a>
                 </div>
-                <div className="py-1 border-t border-gray-700">
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  >
-                    Log out
-                  </a>
-                </div>
+                
               </div>
             )}
           </div>
