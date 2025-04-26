@@ -681,12 +681,7 @@ const PlaylistView = () => {
           <div className="p-4 border-b border-gray-800">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-bold">Now Playing</h3>
-              <button
-                onClick={() => setShowQueueSidebar(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-800 transition-colors"
-              >
-                <FiX size={20} />
-              </button>
+              
             </div>
           </div>
 
