@@ -37,7 +37,7 @@ const PlaylistView = () => {
   const [isShuffled, setIsShuffled] = useState(false);
   const [originalQueue, setOriginalQueue] = useState([]);
   const [hoveredSong, setHoveredSong] = useState(null);
-  const [isRepeatOn, setIsRepeatOn] = useState(false);
+  const [repeatMode, setRepeatMode] = useState("none"); // 'none', 'queue', 'song'
 
   // Helper function to get numeric ID from song ID string
   const getSongIdNumber = (songId) => {
@@ -257,7 +257,7 @@ const PlaylistView = () => {
   };
 
   const handleNextSong = () => {
-    if (isRepeatOn) {
+    if (repeatMode === "song") {
       restartCurrentSong();
       return;
     }
@@ -266,6 +266,11 @@ const PlaylistView = () => {
       const nextIndex = currentSongIndex + 1;
       setCurrentSongIndex(nextIndex);
       setCurrentTrack(queue[nextIndex]);
+      setIsPlaying(true);
+    } else if (repeatMode === "queue") {
+      // Loop back to the first song
+      setCurrentSongIndex(0);
+      setCurrentTrack(queue[0]);
       setIsPlaying(true);
     } else {
       setIsPlaying(false);
@@ -279,6 +284,12 @@ const PlaylistView = () => {
       const prevIndex = currentSongIndex - 1;
       setCurrentSongIndex(prevIndex);
       setCurrentTrack(queue[prevIndex]);
+      setIsPlaying(true);
+    } else if (repeatMode === "queue") {
+      // Loop to the last song
+      const lastIndex = queue.length - 1;
+      setCurrentSongIndex(lastIndex);
+      setCurrentTrack(queue[lastIndex]);
       setIsPlaying(true);
     }
   };
@@ -319,7 +330,12 @@ const PlaylistView = () => {
   };
 
   const toggleRepeat = () => {
-    setIsRepeatOn(!isRepeatOn);
+    // Cycle through repeat modes: none -> queue -> song -> none
+    setRepeatMode(prevMode => {
+      if (prevMode === "none") return "queue";
+      if (prevMode === "queue") return "song";
+      return "none";
+    });
   };
 
   const restartCurrentSong = () => {
@@ -647,12 +663,12 @@ const PlaylistView = () => {
             }}
             onNext={handleNextSong}
             onPrevious={handlePreviousSong}
-            hasNext={currentSongIndex < queue.length - 1}
-            hasPrevious={currentSongIndex > 0}
+            hasNext={currentSongIndex < queue.length - 1 || repeatMode === "queue"}
+            hasPrevious={currentSongIndex > 0 || repeatMode === "queue"}
             queue={queue}
             currentSongIndex={currentSongIndex}
             setCurrentSongIndex={setCurrentSongIndex}
-            isRepeatOn={isRepeatOn}
+            repeatMode={repeatMode}
             toggleRepeat={toggleRepeat}
             restartCurrentSong={restartCurrentSong}
           />
@@ -694,16 +710,19 @@ const PlaylistView = () => {
                 <button
                   onClick={toggleRepeat}
                   className={`p-2 rounded-full ${
-                    isRepeatOn
+                    repeatMode !== "none"
                       ? "text-green-500"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  aria-label={isRepeatOn ? "Turn off repeat" : "Turn on repeat"}
+                  aria-label={`Repeat ${repeatMode}`}
                 >
                   <FiRepeat
                     size={16}
-                    className={isRepeatOn ? "fill-current" : ""}
+                    className={repeatMode !== "none" ? "fill-current" : ""}
                   />
+                  {repeatMode === "song" && (
+                    <span className="absolute -mt-6 ml-1 text-xs text-green-500">1</span>
+                  )}
                 </button>
                 <button
                   onClick={() => setIsPlaying(!isPlaying)}
@@ -742,7 +761,7 @@ const PlaylistView = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto scrollbar-hide pb-4">
-            {queue.length > currentSongIndex + 1 ? (
+            {queue.length > currentSongIndex + 1 || repeatMode === "queue" ? (
               <div className="divide-y divide-gray-800">
                 {queue.slice(currentSongIndex + 1).map((song, index) => {
                   const isLiked = likedSongs.includes(`song-${song.id}`);
@@ -791,6 +810,67 @@ const PlaylistView = () => {
                     </div>
                   );
                 })}
+                {repeatMode === "queue" && currentSongIndex > 0 && (
+                  <>
+                    <div className="p-3 text-xs text-gray-500 text-center">
+                      Queue will repeat from the beginning
+                    </div>
+                    {queue.slice(0, currentSongIndex + 1).map((song, index) => (
+                      <div
+                        key={`repeat-${song.id}-${index}`}
+                        className="p-3 hover:bg-gray-800 cursor-pointer flex items-center gap-3 group opacity-60"
+                        onClick={() => {
+                          setCurrentSongIndex(index);
+                          setCurrentTrack(queue[index]);
+                          setIsPlaying(true);
+                          setShowPlayer(true);
+                        }}
+                      >
+                        <img
+                          src={song.cover || "/default-cover.jpg"}
+                          alt={song.title}
+                          className="w-10 h-10 rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium truncate">{song.title}</h4>
+                          <p className="text-sm text-gray-400 truncate">
+                            {song.artist}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            className={`p-1 ${
+                              likedSongs.includes(`song-${song.id}`)
+                                ? "text-green-500"
+                                : "text-gray-400 hover:text-white"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleLikeSong(song.id);
+                            }}
+                            aria-label={
+                              likedSongs.includes(`song-${song.id}`)
+                                ? "Unlike song"
+                                : "Like song"
+                            }
+                          >
+                            <FiHeart
+                              size={18}
+                              className={
+                                likedSongs.includes(`song-${song.id}`)
+                                  ? "fill-current"
+                                  : ""
+                              }
+                            />
+                          </button>
+                          <span className="text-sm text-gray-400">
+                            {song.duration || "0:00"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             ) : (
               <div className="p-4 text-center text-gray-500">
