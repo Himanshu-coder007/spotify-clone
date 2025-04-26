@@ -17,10 +17,10 @@ const Playlist = () => {
   const [hoveredRow, setHoveredRow] = useState(null);
   const [showQueue, setShowQueue] = useState(false);
   const [queue, setQueue] = useState([]);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
+  const [currentSongIndex, setCurrentSongIndex] = useState(-1);
   const [isShuffled, setIsShuffled] = useState(false);
   const [originalQueue, setOriginalQueue] = useState([]);
-  const [isRepeatOn, setIsRepeatOn] = useState(false);
+  const [repeatMode, setRepeatMode] = useState("none"); // 'none', 'queue', 'song'
   const [likedSongs, setLikedSongs] = useState([]);
 
   // Mock playlist data
@@ -107,7 +107,8 @@ const Playlist = () => {
     dateAdded: `${Math.floor(Math.random() * 30) + 1} days ago`,
     cover: song.cover,
     src: song.src,
-    explicit: song.explicit
+    explicit: song.explicit,
+    lyrics: song.lyrics || null
   }));
 
   const toggleLikeSong = (songId) => {
@@ -150,14 +151,15 @@ const Playlist = () => {
         album: song.album,
         cover: song.cover,
         src: song.src,
-        duration: song.duration
+        duration: song.duration,
+        lyrics: song.lyrics
       });
       
       // Set the queue to the remaining songs in the playlist
       const newQueue = [...playlistSongs.slice(index + 1)];
       setQueue(newQueue);
       setOriginalQueue(newQueue);
-      setCurrentTrackIndex(index);
+      setCurrentSongIndex(index);
       setIsPlaying(true);
     }
     
@@ -181,14 +183,15 @@ const Playlist = () => {
           album: firstSong.album,
           cover: firstSong.cover,
           src: firstSong.src,
-          duration: firstSong.duration
+          duration: firstSong.duration,
+          lyrics: firstSong.lyrics
         });
         
         // Set the queue to all songs except the first one
         const newQueue = [...playlistSongs.slice(1)];
         setQueue(newQueue);
         setOriginalQueue(newQueue);
-        setCurrentTrackIndex(0);
+        setCurrentSongIndex(0);
         setIsPlaying(true);
       }
       
@@ -197,11 +200,10 @@ const Playlist = () => {
     }
   };
 
-  const handleNextTrack = () => {
-    if (isRepeatOn) {
-      // If repeat is on, just restart the current track
-      restartCurrentSong();
-      return;
+  const handleNext = () => {
+    if (repeatMode === "song") {
+      // Restart current song
+      return false; // Tell MusicPlayer to restart
     }
 
     if (queue.length > 0) {
@@ -213,7 +215,8 @@ const Playlist = () => {
         album: nextSong.album,
         cover: nextSong.cover,
         src: nextSong.src,
-        duration: nextSong.duration
+        duration: nextSong.duration,
+        lyrics: nextSong.lyrics
       });
       
       // Update the queue to remove the played song
@@ -222,17 +225,36 @@ const Playlist = () => {
       if (!isShuffled) {
         setOriginalQueue(newQueue);
       }
-      setCurrentTrackIndex(currentTrackIndex + 1);
+      setCurrentSongIndex(currentSongIndex + 1);
+      return true;
+    } else if (repeatMode === "queue") {
+      // Loop back to the first song
+      const firstSong = playlistSongs[0];
+      setCurrentTrack({
+        id: firstSong.id,
+        title: firstSong.title,
+        artist: firstSong.artist,
+        album: firstSong.album,
+        cover: firstSong.cover,
+        src: firstSong.src,
+        duration: firstSong.duration,
+        lyrics: firstSong.lyrics
+      });
+      const newQueue = [...playlistSongs.slice(1)];
+      setQueue(newQueue);
+      setOriginalQueue(newQueue);
+      setCurrentSongIndex(0);
+      setIsPlaying(true);
+      return true;
     } else {
       // No more songs in queue
-      setIsPlaying(false);
-      setShowQueue(false);
+      return false;
     }
   };
 
-  const handlePreviousTrack = () => {
-    if (currentTrackIndex > 0) {
-      const prevSong = playlistSongs[currentTrackIndex - 1];
+  const handlePrevious = () => {
+    if (currentSongIndex > 0) {
+      const prevSong = playlistSongs[currentSongIndex - 1];
       setCurrentTrack({
         id: prevSong.id,
         title: prevSong.title,
@@ -240,7 +262,8 @@ const Playlist = () => {
         album: prevSong.album,
         cover: prevSong.cover,
         src: prevSong.src,
-        duration: prevSong.duration
+        duration: prevSong.duration,
+        lyrics: prevSong.lyrics
       });
       
       // Add the current song back to the queue
@@ -249,18 +272,34 @@ const Playlist = () => {
       if (!isShuffled) {
         setOriginalQueue(newQueue);
       }
-      setCurrentTrackIndex(currentTrackIndex - 1);
+      setCurrentSongIndex(currentSongIndex - 1);
+      return true;
+    } else if (repeatMode === "queue") {
+      // Loop to the last song
+      const lastSong = playlistSongs[playlistSongs.length - 1];
+      setCurrentTrack({
+        id: lastSong.id,
+        title: lastSong.title,
+        artist: lastSong.artist,
+        album: lastSong.album,
+        cover: lastSong.cover,
+        src: lastSong.src,
+        duration: lastSong.duration,
+        lyrics: lastSong.lyrics
+      });
+      setQueue([]);
+      setOriginalQueue([]);
+      setCurrentSongIndex(playlistSongs.length - 1);
+      setIsPlaying(true);
+      return true;
     }
-  };
-
-  const handleTrackEnd = () => {
-    handleNextTrack();
+    return false;
   };
 
   const toggleShuffle = () => {
     if (isShuffled) {
       // Return to original order
-      const remainingOriginalQueue = originalQueue.slice(currentTrackIndex + 1 - currentTrackIndex);
+      const remainingOriginalQueue = originalQueue.slice(currentSongIndex + 1 - currentSongIndex);
       setQueue(remainingOriginalQueue);
     } else {
       // Shuffle the queue
@@ -275,15 +314,12 @@ const Playlist = () => {
   };
 
   const toggleRepeat = () => {
-    setIsRepeatOn(!isRepeatOn);
-  };
-
-  const restartCurrentSong = () => {
-    if (currentTrack) {
-      // Create a new object to force re-render in the MusicPlayer component
-      setCurrentTrack({...currentTrack});
-      setIsPlaying(true);
-    }
+    // Cycle through repeat modes: none -> queue -> song -> none
+    setRepeatMode(prevMode => {
+      if (prevMode === "none") return "queue";
+      if (prevMode === "queue") return "song";
+      return "none";
+    });
   };
 
   if (!playlist) {
@@ -375,11 +411,14 @@ const Playlist = () => {
           </button>
           
           <button 
-            className={`p-3 rounded-full ${isRepeatOn ? 'bg-green-500 text-black' : 'bg-gray-800 text-white'} hover:bg-gray-700 transition-colors`}
+            className={`p-3 rounded-full ${repeatMode !== "none" ? 'bg-green-500 text-black' : 'bg-gray-800 text-white'} hover:bg-gray-700 transition-colors`}
             onClick={toggleRepeat}
-            title="Repeat"
+            title={`Repeat ${repeatMode}`}
           >
             <FaRedo />
+            {repeatMode === "song" && (
+              <span className="absolute -mt-6 ml-1 text-xs text-green-500">1</span>
+            )}
           </button>
         </div>
 
@@ -520,7 +559,7 @@ const Playlist = () => {
             {/* Next in Queue */}
             <div>
               <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-4">Next in Queue</h3>
-              {queue.length > 0 ? (
+              {queue.length > 0 || repeatMode === "queue" ? (
                 <ul className="space-y-3">
                   {queue.map((song, index) => (
                     <li 
@@ -529,7 +568,7 @@ const Playlist = () => {
                       onClick={() => {
                         setCurrentTrack(song);
                         setQueue(queue.slice(index + 1));
-                        setCurrentTrackIndex(currentTrackIndex + index + 1);
+                        setCurrentSongIndex(currentSongIndex + index + 1);
                         setIsPlaying(true);
                       }}
                     >
@@ -545,6 +584,36 @@ const Playlist = () => {
                       <span className="text-gray-400 text-sm ml-2">{song.duration}</span>
                     </li>
                   ))}
+                  {repeatMode === "queue" && currentSongIndex > 0 && (
+                    <>
+                      <li className="p-2 text-xs text-gray-500 text-center">
+                        Queue will repeat from the beginning
+                      </li>
+                      {playlistSongs.slice(0, currentSongIndex).map((song, index) => (
+                        <li
+                          key={`repeat-${song.id}-${index}`}
+                          className="flex items-center p-2 hover:bg-gray-800 rounded-lg cursor-pointer opacity-60"
+                          onClick={() => {
+                            setCurrentTrack(song);
+                            setQueue([...playlistSongs.slice(index + 1)]);
+                            setCurrentSongIndex(index);
+                            setIsPlaying(true);
+                          }}
+                        >
+                          <img 
+                            src={song.cover} 
+                            alt={song.title}
+                            className="w-12 h-12 object-cover rounded mr-3"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-white font-medium truncate">{song.title}</h4>
+                            <p className="text-gray-400 text-sm truncate">{song.artist}</p>
+                          </div>
+                          <span className="text-gray-400 text-sm ml-2">{song.duration}</span>
+                        </li>
+                      ))}
+                    </>
+                  )}
                 </ul>
               ) : (
                 <p className="text-gray-400 text-sm">No more songs in queue</p>
@@ -567,19 +636,13 @@ const Playlist = () => {
             setCurrentTrack(null);
             setShowQueue(false);
           }}
-          onTrackEnd={handleTrackEnd}
-          onNextTrack={handleNextTrack}
-          onPreviousTrack={handlePreviousTrack}
-          hasNextTrack={queue.length > 0}
-          hasPreviousTrack={currentTrackIndex > 0}
-          showQueueButton={true}
-          onToggleQueue={() => setShowQueue(!showQueue)}
-          queueVisible={showQueue}
-          isRepeatOn={isRepeatOn}
-          toggleRepeat={toggleRepeat}
-          isShuffled={isShuffled}
-          toggleShuffle={toggleShuffle}
-          restartCurrentSong={restartCurrentSong}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          hasNext={queue.length > 0 || repeatMode === "queue"}
+          hasPrevious={currentSongIndex > 0 || repeatMode === "queue"}
+          queue={playlistSongs}
+          currentSongIndex={currentSongIndex}
+          setCurrentSongIndex={setCurrentSongIndex}
         />
       )}
     </div>
