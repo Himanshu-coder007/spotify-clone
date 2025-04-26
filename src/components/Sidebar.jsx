@@ -20,7 +20,7 @@ const Sidebar = ({ onLogout, username }) => {
   const [likedSongs, setLikedSongs] = useState([]);
   const [likedPlaylists, setLikedPlaylists] = useState([]);
   const [allSongs, setAllSongs] = useState(songsData.songs);
-  const [isCollapsed, setIsCollapsed] = useState(true); // Changed to true to hide by default
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const location = useLocation();
 
   // Function to load playlists and liked songs from localStorage
@@ -37,7 +37,6 @@ const Sidebar = ({ onLogout, username }) => {
         songs: [],
       };
 
-      // Get liked songs and playlists
       setLikedSongs(musicAppLikes.songs || []);
       setLikedPlaylists(musicAppLikes.playlists || []);
     } catch (error) {
@@ -48,11 +47,9 @@ const Sidebar = ({ onLogout, username }) => {
     }
   };
 
-  // Load data on initial render
   useEffect(() => {
     loadData();
 
-    // Set up event listener for storage changes
     const handleStorageChange = (e) => {
       if (e.key === "playlists" || e.key === "musicAppLikes") {
         loadData();
@@ -66,7 +63,6 @@ const Sidebar = ({ onLogout, username }) => {
     };
   }, []);
 
-  // Also listen for custom events if data is updated within the same window
   useEffect(() => {
     const handleCustomEvent = () => loadData();
     window.addEventListener("playlistsUpdated", handleCustomEvent);
@@ -86,23 +82,18 @@ const Sidebar = ({ onLogout, username }) => {
     setPlaylists(updatedPlaylists);
     setShowDeleteConfirm(null);
 
-    // Dispatch event to notify other components
     window.dispatchEvent(new Event("dataUpdated"));
 
-    // If we're currently viewing the deleted playlist, redirect to home
     if (location.pathname === `/playlist/${playlistId}`) {
       window.location.href = "/";
     }
   };
 
-  // Get song details by ID
   const getSongDetails = (songId) => {
-    // Extract the index from the songId (format: "song-{index}")
     const index = parseInt(songId.replace("song-", ""));
     return songsData.songs[index] || {};
   };
 
-  // Featured playlists data (same as in Home.jsx)
   const featuredPlaylists = [
     {
       id: "playlist-1",
@@ -142,7 +133,6 @@ const Sidebar = ({ onLogout, username }) => {
     },
   ];
 
-  // Get liked playlists from featured playlists
   const getLikedPlaylists = () => {
     return featuredPlaylists.filter((playlist) =>
       likedPlaylists.includes(playlist.id)
@@ -167,6 +157,15 @@ const Sidebar = ({ onLogout, username }) => {
             <FiPlus size={20} />
           </button>
         </Link>
+        
+        {/* Collapsed Logout Button */}
+        <button
+          onClick={onLogout}
+          className="p-2 text-gray-400 hover:text-white rounded-full hover:bg-gray-800 mt-auto"
+          title="Logout"
+        >
+          <FiLogOut size={20} />
+        </button>
       </div>
     );
   }
@@ -411,25 +410,6 @@ const Sidebar = ({ onLogout, username }) => {
         )}
       </div>
 
-      {/* User Section */}
-      <div className="p-4 border-t border-gray-800">
-        <div className="flex items-center justify-between text-gray-400 text-sm">
-          {username ? (
-            <>
-              <span className="truncate">Logged in as {username}</span>
-              <button
-                onClick={onLogout}
-                className="flex items-center p-2 text-gray-400 hover:text-white rounded hover:bg-gray-800 transition-colors"
-              >
-                <FiLogOut className="mr-2" />
-                <span>Logout</span>
-              </button>
-            </>
-          ) : (
-            <span className="truncate">Not logged in</span>
-          )}
-        </div>
-      </div>
     </div>
   );
 };
