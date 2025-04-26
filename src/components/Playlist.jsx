@@ -1,27 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaPlay, FaChevronLeft, FaTimes, FaRandom, FaRedo, FaPause, FaHeart } from 'react-icons/fa';
-import { MdExplicit } from 'react-icons/md';
-import MusicPlayer from '../components/MusicPlayer';
-import songsData from '../data/songs.json';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  FiPlay,
+  FiPause,
+  FiHeart,
+  FiShuffle,
+  FiRepeat,
+  FiClock,
+  FiPlus,
+  FiMoreHorizontal,
+  FiEdit,
+  FiTrash2,
+  FiArrowLeft,
+  FiX,
+  FiMusic,
+} from "react-icons/fi";
+import { MdExplicit } from "react-icons/md";
+import MusicPlayer from "../components/MusicPlayer";
+import songsData from "../data/songs.json";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Playlist = () => {
   const { playlistId } = useParams();
   const navigate = useNavigate();
   const [playlist, setPlaylist] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
-  const [hoveredRow, setHoveredRow] = useState(null);
-  const [showQueue, setShowQueue] = useState(false);
   const [queue, setQueue] = useState([]);
-  const [currentSongIndex, setCurrentSongIndex] = useState(-1);
+  const [currentSongIndex, setCurrentSongIndex] = useState(0);
+  const [showQueueSidebar, setShowQueueSidebar] = useState(false);
+  const [likedSongs, setLikedSongs] = useState([]);
   const [isShuffled, setIsShuffled] = useState(false);
   const [originalQueue, setOriginalQueue] = useState([]);
+  const [hoveredSong, setHoveredSong] = useState(null);
   const [repeatMode, setRepeatMode] = useState("none"); // 'none', 'queue', 'song'
-  const [likedSongs, setLikedSongs] = useState([]);
 
   // Mock playlist data
   const featuredPlaylists = [
@@ -81,12 +96,12 @@ const Playlist = () => {
 
   useEffect(() => {
     // Find the playlist by ID
-    const foundPlaylist = featuredPlaylists.find(p => p.id === playlistId);
+    const foundPlaylist = featuredPlaylists.find((p) => p.id === playlistId);
     if (foundPlaylist) {
       setPlaylist(foundPlaylist);
     } else {
       // Handle not found
-      navigate('/');
+      navigate("/");
     }
 
     // Load liked songs
@@ -108,7 +123,7 @@ const Playlist = () => {
     cover: song.cover,
     src: song.src,
     explicit: song.explicit,
-    lyrics: song.lyrics || null
+    lyrics: song.lyrics || null,
   }));
 
   const toggleLikeSong = (songId) => {
@@ -124,6 +139,30 @@ const Playlist = () => {
         position: "top-right",
         autoClose: 2000,
       });
+
+      // Sort songs by liked status
+      const likedSongsOrder = musicAppLikes.songs;
+      const sortedSongs = [...playlistSongs].sort((a, b) => {
+        const aIndex = likedSongsOrder.indexOf(a.id);
+        const bIndex = likedSongsOrder.indexOf(b.id);
+
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+
+      setQueue(sortedSongs);
+      setOriginalQueue(sortedSongs);
+
+      if (currentTrack) {
+        const newIndex = sortedSongs.findIndex(
+          (song) => song.id === currentTrack.id
+        );
+        if (newIndex !== -1) {
+          setCurrentSongIndex(newIndex);
+        }
+      }
     } else {
       musicAppLikes.songs.splice(songIndex, 1);
       toast.info("Removed from Liked Songs", {
@@ -136,177 +175,126 @@ const Playlist = () => {
     setLikedSongs(musicAppLikes.songs);
   };
 
-  const handleTrackClick = (index) => {
-    const song = playlistSongs[index];
-    
-    if (currentTrack && currentTrack.id === song.id) {
-      // Toggle play/pause if clicking the same song
-      setIsPlaying(!isPlaying);
-    } else {
-      // Play the new song
-      setCurrentTrack({
-        id: song.id,
-        title: song.title,
-        artist: song.artist,
-        album: song.album,
-        cover: song.cover,
-        src: song.src,
-        duration: song.duration,
-        lyrics: song.lyrics
-      });
-      
-      // Set the queue to the remaining songs in the playlist
-      const newQueue = [...playlistSongs.slice(index + 1)];
-      setQueue(newQueue);
-      setOriginalQueue(newQueue);
-      setCurrentSongIndex(index);
-      setIsPlaying(true);
+  const playSong = (songId) => {
+    const songToPlay = playlistSongs.find((s) => s.id === songId);
+    if (songToPlay) {
+      const songIndex = playlistSongs.findIndex((song) => song.id === songId);
+
+      if (songIndex !== -1) {
+        if (currentTrack?.id === songId) {
+          setIsPlaying(!isPlaying);
+        } else {
+          setCurrentSongIndex(songIndex);
+          setCurrentTrack(songToPlay);
+          setIsPlaying(true);
+
+          // Set the queue to the remaining songs
+          const newQueue = [...playlistSongs.slice(songIndex + 1)];
+          setQueue(newQueue);
+          setOriginalQueue(newQueue);
+        }
+        setShowPlayer(true);
+        setShowQueueSidebar(true);
+      }
     }
-    
-    setShowPlayer(true);
-    setShowQueue(true);
   };
 
-  const handlePlayAll = () => {
+  const playAllSongs = () => {
     if (playlistSongs.length > 0) {
       const firstSong = playlistSongs[0];
-      
-      if (currentTrack && currentTrack.id === firstSong.id) {
-        // Toggle play/pause if already playing the first song
+
+      if (currentTrack?.id === firstSong.id) {
         setIsPlaying(!isPlaying);
       } else {
-        // Start playing from the beginning
-        setCurrentTrack({
-          id: firstSong.id,
-          title: firstSong.title,
-          artist: firstSong.artist,
-          album: firstSong.album,
-          cover: firstSong.cover,
-          src: firstSong.src,
-          duration: firstSong.duration,
-          lyrics: firstSong.lyrics
-        });
-        
+        setCurrentSongIndex(0);
+        setCurrentTrack(firstSong);
+        setIsPlaying(true);
+
         // Set the queue to all songs except the first one
         const newQueue = [...playlistSongs.slice(1)];
         setQueue(newQueue);
         setOriginalQueue(newQueue);
-        setCurrentSongIndex(0);
-        setIsPlaying(true);
       }
-      
+
       setShowPlayer(true);
-      setShowQueue(true);
+      setShowQueueSidebar(true);
     }
   };
 
-  const handleNext = () => {
+  const handleNextSong = () => {
     if (repeatMode === "song") {
-      // Restart current song
-      return false; // Tell MusicPlayer to restart
+      restartCurrentSong();
+      return;
     }
 
-    if (queue.length > 0) {
-      const nextSong = queue[0];
-      setCurrentTrack({
-        id: nextSong.id,
-        title: nextSong.title,
-        artist: nextSong.artist,
-        album: nextSong.album,
-        cover: nextSong.cover,
-        src: nextSong.src,
-        duration: nextSong.duration,
-        lyrics: nextSong.lyrics
-      });
-      
-      // Update the queue to remove the played song
-      const newQueue = [...queue.slice(1)];
+    if (currentSongIndex < playlistSongs.length - 1) {
+      const nextIndex = currentSongIndex + 1;
+      setCurrentSongIndex(nextIndex);
+      setCurrentTrack(playlistSongs[nextIndex]);
+      setIsPlaying(true);
+
+      // Update queue
+      const newQueue = [...playlistSongs.slice(nextIndex + 1)];
       setQueue(newQueue);
       if (!isShuffled) {
         setOriginalQueue(newQueue);
       }
-      setCurrentSongIndex(currentSongIndex + 1);
-      return true;
     } else if (repeatMode === "queue") {
       // Loop back to the first song
-      const firstSong = playlistSongs[0];
-      setCurrentTrack({
-        id: firstSong.id,
-        title: firstSong.title,
-        artist: firstSong.artist,
-        album: firstSong.album,
-        cover: firstSong.cover,
-        src: firstSong.src,
-        duration: firstSong.duration,
-        lyrics: firstSong.lyrics
-      });
+      setCurrentSongIndex(0);
+      setCurrentTrack(playlistSongs[0]);
+      setIsPlaying(true);
+
+      // Set queue to all songs except first
       const newQueue = [...playlistSongs.slice(1)];
       setQueue(newQueue);
       setOriginalQueue(newQueue);
-      setCurrentSongIndex(0);
-      setIsPlaying(true);
-      return true;
     } else {
-      // No more songs in queue
-      return false;
+      setIsPlaying(false);
+      setCurrentTrack(null);
+      setShowQueueSidebar(false);
     }
   };
 
-  const handlePrevious = () => {
+  const handlePreviousSong = () => {
     if (currentSongIndex > 0) {
-      const prevSong = playlistSongs[currentSongIndex - 1];
-      setCurrentTrack({
-        id: prevSong.id,
-        title: prevSong.title,
-        artist: prevSong.artist,
-        album: prevSong.album,
-        cover: prevSong.cover,
-        src: prevSong.src,
-        duration: prevSong.duration,
-        lyrics: prevSong.lyrics
-      });
-      
-      // Add the current song back to the queue
-      const newQueue = [currentTrack, ...queue];
+      const prevIndex = currentSongIndex - 1;
+      setCurrentSongIndex(prevIndex);
+      setCurrentTrack(playlistSongs[prevIndex]);
+      setIsPlaying(true);
+
+      // Add current song back to queue
+      const newQueue = [playlistSongs[currentSongIndex], ...queue];
       setQueue(newQueue);
       if (!isShuffled) {
         setOriginalQueue(newQueue);
       }
-      setCurrentSongIndex(currentSongIndex - 1);
-      return true;
     } else if (repeatMode === "queue") {
       // Loop to the last song
-      const lastSong = playlistSongs[playlistSongs.length - 1];
-      setCurrentTrack({
-        id: lastSong.id,
-        title: lastSong.title,
-        artist: lastSong.artist,
-        album: lastSong.album,
-        cover: lastSong.cover,
-        src: lastSong.src,
-        duration: lastSong.duration,
-        lyrics: lastSong.lyrics
-      });
+      const lastIndex = playlistSongs.length - 1;
+      setCurrentSongIndex(lastIndex);
+      setCurrentTrack(playlistSongs[lastIndex]);
+      setIsPlaying(true);
+
+      // Empty the queue
       setQueue([]);
       setOriginalQueue([]);
-      setCurrentSongIndex(playlistSongs.length - 1);
-      setIsPlaying(true);
-      return true;
     }
-    return false;
   };
 
   const toggleShuffle = () => {
     if (isShuffled) {
       // Return to original order
-      const remainingOriginalQueue = originalQueue.slice(currentSongIndex + 1 - currentSongIndex);
-      setQueue(remainingOriginalQueue);
+      setQueue([...originalQueue]);
     } else {
       // Shuffle the queue
       const shuffledQueue = [...queue];
       for (let i = shuffledQueue.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [shuffledQueue[i], shuffledQueue[j]] = [shuffledQueue[j], shuffledQueue[i]];
+        [shuffledQueue[i], shuffledQueue[j]] = [
+          shuffledQueue[j],
+          shuffledQueue[i],
+        ];
       }
       setQueue(shuffledQueue);
     }
@@ -315,187 +303,216 @@ const Playlist = () => {
 
   const toggleRepeat = () => {
     // Cycle through repeat modes: none -> queue -> song -> none
-    setRepeatMode(prevMode => {
+    setRepeatMode((prevMode) => {
       if (prevMode === "none") return "queue";
       if (prevMode === "queue") return "song";
       return "none";
     });
   };
 
+  const restartCurrentSong = () => {
+    if (currentTrack) {
+      setCurrentTrack({ ...currentTrack });
+      setIsPlaying(true);
+    }
+  };
+
   if (!playlist) {
-    return <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12 flex items-center justify-center">
-      <div className="text-white text-2xl">Loading...</div>
-    </div>;
+    return (
+      <div className="flex-1 h-screen overflow-y-auto bg-gradient-to-b from-gray-900 to-black p-12 flex items-center justify-center">
+        <div className="text-white text-2xl">Loading...</div>
+      </div>
+    );
   }
 
   const playlistBackgroundColor = playlistColors[playlist.id] || "#000000";
-  const isCurrentTrackInPlaylist = currentTrack && playlistSongs.some(song => song.id === currentTrack.id);
+  const isCurrentTrackInPlaylist =
+    currentTrack && playlistSongs.some((song) => song.id === currentTrack.id);
 
   return (
-    <div 
-      className="flex-1 h-screen overflow-y-auto p-8 relative"
-      style={{
-        background: `linear-gradient(180deg, ${playlistBackgroundColor} 0%, #000000 100%)`
-      }}
-    >
+    <div className="h-screen bg-gradient-to-b from-gray-900 to-black text-white overflow-hidden flex">
       <ToastContainer />
-      
-      <div className={`max-w-6xl mx-auto transition-all duration-300 ${showQueue ? 'mr-80' : ''}`}>
-        {/* Back button */}
-        <button 
-          onClick={() => navigate(-1)}
-          className="flex items-center text-gray-400 hover:text-white mb-8 transition-colors"
-        >
-          <FaChevronLeft className="mr-2" />
-          Back
-        </button>
 
-        {/* Playlist header */}
-        <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
-          <div className="relative">
-            <img 
-              src={playlist.images[0]?.url || "/default-playlist.jpg"} 
-              alt={playlist.name}
-              className="w-48 h-48 sm:w-64 sm:h-64 object-cover shadow-xl"
-              style={{ boxShadow: '0 4px 60px rgba(0,0,0,.5)' }}
-            />
+      {/* Main Content */}
+      <div
+        className={`h-screen overflow-hidden flex flex-col ${
+          showQueueSidebar ? "w-[calc(100vw-360px)]" : "w-full"
+        }`}
+      >
+        <div
+          className="flex-1 overflow-y-auto p-6 scrollbar-hide"
+          style={{
+            background: `linear-gradient(180deg, ${playlistBackgroundColor} 0%, rgba(0,0,0,0.8) 100%)`,
+          }}
+        >
+          {/* Back button */}
+          <div className="flex items-center gap-6 mb-6">
             <button
-              onClick={handlePlayAll}
-              className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity rounded-lg"
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-black bg-opacity-40 hover:bg-opacity-60 transition-all"
             >
-              <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center hover:bg-green-700 transition-colors hover:scale-105">
-                {isPlaying && isCurrentTrackInPlaylist ? (
-                  <FaPause size={28} />
-                ) : (
-                  <FaPlay size={28} className="ml-1" />
-                )}
-              </div>
+              <FiArrowLeft size={20} />
             </button>
           </div>
-          <div>
-            <p className="text-white uppercase text-xs tracking-widest mb-2">Playlist</p>
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">{playlist.name}</h1>
-            <p className="text-gray-400 text-sm sm:text-base">
-              {playlist.description || "A great collection of tracks"}
-            </p>
-            <div className="flex items-center mt-4 text-gray-400 text-sm">
-              <span className="font-bold text-white">Spotify</span>
-              <span className="mx-1">•</span>
-              <span>{playlistSongs.length} songs</span>
-              <span className="mx-1">•</span>
-              <span>about {Math.floor(playlistSongs.length * 3.5 / 60)} hr</span>
+
+          {/* Playlist Header */}
+          <div className="flex flex-col md:flex-row items-start mb-8 gap-6">
+            <div className="w-full md:w-56 h-56 rounded-lg shadow-xl flex items-center justify-center shrink-0 relative group">
+              <img
+                src={playlist.images[0]?.url || "/default-playlist.jpg"}
+                alt={playlist.name}
+                className="w-full h-full object-cover rounded-lg"
+              />
+              <button
+                onClick={playAllSongs}
+                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
+              >
+                <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center hover:bg-green-400 transition-all hover:scale-105">
+                  {isPlaying && isCurrentTrackInPlaylist ? (
+                    <FiPause size={28} className="text-black" />
+                  ) : (
+                    <FiPlay size={28} className="ml-1 text-black" />
+                  )}
+                </div>
+              </button>
+            </div>
+            <div className="flex-1 w-full">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold mb-2">PLAYLIST</span>
+                <h2 className="text-5xl font-bold mb-4 truncate max-w-2xl">
+                  {playlist.name}
+                </h2>
+                <p className="text-gray-400 mb-6 line-clamp-2 max-w-2xl">
+                  {playlist.description}
+                </p>
+                <div className="flex items-center text-sm text-gray-400 gap-4">
+                  <span className="font-medium text-white">Spotify</span>
+                  <span>
+                    {playlistSongs.length}{" "}
+                    {playlistSongs.length === 1 ? "song" : "songs"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Play controls */}
-        <div className="mb-8 flex items-center gap-4">
-          <button 
-            className="bg-green-500 hover:bg-green-400 transition-colors text-black rounded-full px-8 py-3 font-bold flex items-center"
-            onClick={handlePlayAll}
-          >
-            {isPlaying && isCurrentTrackInPlaylist ? (
-              <FaPause className="mr-2" />
-            ) : (
-              <FaPlay className="mr-2" />
-            )}
-            {isPlaying && isCurrentTrackInPlaylist ? "Pause" : "Play"}
-          </button>
-          
-          <button 
-            className={`p-3 rounded-full ${isShuffled ? 'bg-green-500 text-black' : 'bg-gray-800 text-white'} hover:bg-gray-700 transition-colors`}
-            onClick={toggleShuffle}
-            title="Shuffle"
-          >
-            <FaRandom />
-          </button>
-          
-          <button 
-            className={`p-3 rounded-full ${repeatMode !== "none" ? 'bg-green-500 text-black' : 'bg-gray-800 text-white'} hover:bg-gray-700 transition-colors`}
-            onClick={toggleRepeat}
-            title={`Repeat ${repeatMode}`}
-          >
-            <FaRedo />
-            {repeatMode === "song" && (
-              <span className="absolute -mt-6 ml-1 text-xs text-green-500">1</span>
-            )}
-          </button>
-        </div>
+          {/* Playlist Actions */}
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={playAllSongs}
+              className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500 hover:bg-green-400 transition-all hover:scale-105"
+              aria-label={isPlaying ? "Pause all" : "Play all"}
+            >
+              {isPlaying && isCurrentTrackInPlaylist ? (
+                <FiPause size={28} className="text-black" />
+              ) : (
+                <FiPlay size={28} className="ml-1 text-black" />
+              )}
+            </button>
+          </div>
 
-        {/* Songs table */}
-        <div className="rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="border-b border-gray-700">
-              <tr className="text-left text-gray-400 text-sm">
-                <th className="p-4 w-12 text-center">#</th>
-                <th className="p-4">Title</th>
-                <th className="p-4 hidden md:table-cell">Album</th>
-                <th className="p-4 hidden sm:table-cell">Date Added</th>
-                <th className="p-4 text-right">
-                  <svg className="w-5 h-5 inline" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828a1 1 0 010-1.415z" clipRule="evenodd" />
-                  </svg>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {playlistSongs.map((song, index) => {
-                const isCurrentTrackPlaying = currentTrack && currentTrack.id === song.id && isPlaying;
-                const isLiked = likedSongs.includes(song.id);
-                
-                return (
-                  <tr 
-                    key={song.id} 
-                    className={`border-b border-gray-700 hover:bg-gray-700 hover:bg-opacity-40 transition-colors ${isCurrentTrackPlaying ? 'text-green-500' : 'text-white'}`}
-                    onMouseEnter={() => setHoveredRow(index)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                    onClick={() => handleTrackClick(index)}
-                  >
-                    <td className="p-4 text-center">
-                      {hoveredRow === index ? (
-                        isCurrentTrackPlaying ? (
-                          <FaPause className="mx-auto" />
+          {/* Playlist Songs */}
+          <div className="mb-24">
+            {/* Songs Table Header */}
+            <div className="grid grid-cols-12 gap-4 px-4 py-3 text-gray-400 text-sm border-b border-gray-800 mb-2">
+              <div className="col-span-1 flex justify-center">#</div>
+              <div className="col-span-5">TITLE</div>
+              <div className="col-span-3">ARTIST</div>
+              <div className="col-span-2">ALBUM</div>
+              <div className="col-span-1 flex justify-end">
+                <FiClock className="text-gray-400" />
+              </div>
+            </div>
+
+            {playlistSongs.length > 0 ? (
+              <div className="space-y-1 max-h-[500px] overflow-y-auto pr-2 scrollbar-hide">
+                {playlistSongs.map((song, index) => {
+                  const isCurrentPlaying =
+                    currentTrack?.id === song.id && isPlaying;
+                  const isLiked = likedSongs.includes(song.id);
+
+                  return (
+                    <div
+                      key={song.id}
+                      className={`grid grid-cols-12 gap-4 items-center p-3 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer ${
+                        isCurrentPlaying ? "bg-gray-800" : ""
+                      }`}
+                      onClick={() => playSong(song.id)}
+                      onMouseEnter={() => setHoveredSong(song.id)}
+                      onMouseLeave={() => setHoveredSong(null)}
+                    >
+                      <div className="col-span-1 flex justify-center">
+                        {isCurrentPlaying ? (
+                          <div className="flex items-center space-x-1 h-5">
+                            <div
+                              className="w-1 h-2 bg-green-500 animate-pulse"
+                              style={{ animationDelay: "0ms" }}
+                            ></div>
+                            <div
+                              className="w-1 h-3 bg-green-500 animate-pulse"
+                              style={{ animationDelay: "150ms" }}
+                            ></div>
+                            <div
+                              className="w-1 h-4 bg-green-500 animate-pulse"
+                              style={{ animationDelay: "300ms" }}
+                            ></div>
+                            <div
+                              className="w-1 h-3 bg-green-500 animate-pulse"
+                              style={{ animationDelay: "450ms" }}
+                            ></div>
+                          </div>
+                        ) : hoveredSong === song.id ? (
+                          <button
+                            className="text-white hover:scale-110 transition-transform"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              playSong(song.id);
+                            }}
+                          >
+                            {currentTrack?.id === song.id && isPlaying ? (
+                              <FiPause size={18} />
+                            ) : (
+                              <FiPlay size={18} />
+                            )}
+                          </button>
                         ) : (
-                          <FaPlay className="mx-auto" />
-                        )
-                      ) : isCurrentTrackPlaying ? (
-                        <div className="flex items-center justify-center h-5">
-                          <div className="flex space-x-1">
-                            <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-1 h-3 bg-green-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">{index + 1}</span>
-                      )}
-                    </td>
-                    <td className="p-4 font-medium">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 mr-3 flex-shrink-0">
-                          <img 
-                            src={song.cover} 
-                            alt={song.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <div className={`${isCurrentTrackPlaying ? 'text-green-500' : 'text-white'}`}>
+                          <span className="text-gray-500">{index + 1}</span>
+                        )}
+                      </div>
+
+                      <div className="col-span-5 flex items-center gap-3">
+                        <img
+                          src={song.cover}
+                          alt={song.title}
+                          className="w-10 h-10 rounded"
+                        />
+                        <div className="flex flex-col">
+                          <span
+                            className={`truncate ${
+                              isCurrentPlaying ? "text-green-500" : "text-white"
+                            }`}
+                          >
                             {song.title}
-                            {song.explicit && <MdExplicit className="inline-block ml-1 text-gray-400" />}
-                          </div>
-                          <div className="text-gray-400 text-sm">{song.artist}</div>
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {song.explicit && <MdExplicit className="inline" />}
+                          </span>
                         </div>
                       </div>
-                    </td>
-                    <td className="p-4 text-gray-400 hidden md:table-cell">{song.album}</td>
-                    <td className="p-4 text-gray-400 hidden sm:table-cell">{song.dateAdded}</td>
-                    <td className="p-4 text-gray-400 text-right">
-                      <div className="flex items-center justify-end gap-2">
+
+                      <div className="col-span-3 text-gray-400 truncate">
+                        {song.artist}
+                      </div>
+
+                      <div className="col-span-2 text-gray-400 truncate">
+                        {song.album}
+                      </div>
+
+                      <div className="col-span-1 flex items-center justify-end gap-3">
                         <button
-                          className={`p-1 rounded-full ${
+                          className={`p-1 ${
                             isLiked
-                              ? "text-green-500 hover:text-green-400"
+                              ? "text-green-500"
                               : "text-gray-400 hover:text-white"
                           }`}
                           onClick={(e) => {
@@ -504,146 +521,291 @@ const Playlist = () => {
                           }}
                           aria-label={isLiked ? "Unlike song" : "Like song"}
                         >
-                          <FaHeart className={isLiked ? "fill-current" : ""} />
+                          <FiHeart
+                            size={18}
+                            className={isLiked ? "fill-current" : ""}
+                          />
                         </button>
-                        {isCurrentTrackPlaying ? (
-                          <div className="inline-flex items-center">
-                            <div className="w-2 h-2 rounded-full bg-green-500 mr-1 animate-pulse"></div>
-                            <span>{song.duration}</span>
-                          </div>
-                        ) : (
-                          song.duration
-                        )}
+                        <span className="text-gray-400 text-sm min-w-[40px] text-right">
+                          {song.duration}
+                        </span>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-16 text-gray-500">
+                <FiMusic className="mx-auto text-4xl mb-4" />
+                <p className="text-lg mb-2">This playlist is empty</p>
+                <p className="text-sm text-gray-600 mb-6">
+                  Add some songs to get started
+                </p>
+                <button
+                  onClick={() => navigate("/search")}
+                  className="px-6 py-2 rounded-full bg-white text-black font-medium hover:scale-105 transition-transform"
+                >
+                  <FiPlus className="inline mr-2" />
+                  Browse Songs
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Music Player */}
+        {showPlayer && currentTrack && (
+          <MusicPlayer
+            currentTrack={currentTrack}
+            setCurrentTrack={setCurrentTrack}
+            isPlaying={isPlaying}
+            setIsPlaying={setIsPlaying}
+            onClose={() => {
+              setShowPlayer(false);
+              setIsPlaying(false);
+              setCurrentTrack(null);
+              setShowQueueSidebar(false);
+            }}
+            onNext={handleNextSong}
+            onPrevious={handlePreviousSong}
+            hasNext={
+              currentSongIndex < playlistSongs.length - 1 ||
+              repeatMode === "queue"
+            }
+            hasPrevious={currentSongIndex > 0 || repeatMode === "queue"}
+            queue={playlistSongs}
+            currentSongIndex={currentSongIndex}
+            setCurrentSongIndex={setCurrentSongIndex}
+            repeatMode={repeatMode}
+            toggleRepeat={toggleRepeat}
+            restartCurrentSong={restartCurrentSong}
+          />
+        )}
       </div>
 
       {/* Queue Sidebar */}
-      {showQueue && (
-        <div className="fixed right-0 top-0 h-full w-80 bg-gray-900 bg-opacity-90 backdrop-blur-sm z-10 shadow-2xl overflow-y-auto">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">Queue</h2>
-              <button 
-                onClick={() => setShowQueue(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <FaTimes />
-              </button>
-            </div>
-
-            {/* Now Playing */}
-            <div className="mb-8">
-              <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-4">Now Playing</h3>
-              {currentTrack && (
-                <div className="flex items-center bg-gray-800 bg-opacity-50 rounded-lg p-4">
-                  <img 
-                    src={currentTrack.cover} 
-                    alt={currentTrack.title}
-                    className="w-16 h-16 object-cover rounded mr-4"
-                  />
-                  <div>
-                    <h4 className="text-white font-medium">{currentTrack.title}</h4>
-                    <p className="text-gray-400 text-sm">{currentTrack.artist}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Next in Queue */}
-            <div>
-              <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-4">Next in Queue</h3>
-              {queue.length > 0 || repeatMode === "queue" ? (
-                <ul className="space-y-3">
-                  {queue.map((song, index) => (
-                    <li 
-                      key={`${song.id}-${index}`}
-                      className="flex items-center p-2 hover:bg-gray-800 rounded-lg cursor-pointer"
-                      onClick={() => {
-                        setCurrentTrack(song);
-                        setQueue(queue.slice(index + 1));
-                        setCurrentSongIndex(currentSongIndex + index + 1);
-                        setIsPlaying(true);
-                      }}
-                    >
-                      <img 
-                        src={song.cover} 
-                        alt={song.title}
-                        className="w-12 h-12 object-cover rounded mr-3"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-medium truncate">{song.title}</h4>
-                        <p className="text-gray-400 text-sm truncate">{song.artist}</p>
-                      </div>
-                      <span className="text-gray-400 text-sm ml-2">{song.duration}</span>
-                    </li>
-                  ))}
-                  {repeatMode === "queue" && currentSongIndex > 0 && (
-                    <>
-                      <li className="p-2 text-xs text-gray-500 text-center">
-                        Queue will repeat from the beginning
-                      </li>
-                      {playlistSongs.slice(0, currentSongIndex).map((song, index) => (
-                        <li
-                          key={`repeat-${song.id}-${index}`}
-                          className="flex items-center p-2 hover:bg-gray-800 rounded-lg cursor-pointer opacity-60"
-                          onClick={() => {
-                            setCurrentTrack(song);
-                            setQueue([...playlistSongs.slice(index + 1)]);
-                            setCurrentSongIndex(index);
-                            setIsPlaying(true);
-                          }}
-                        >
-                          <img 
-                            src={song.cover} 
-                            alt={song.title}
-                            className="w-12 h-12 object-cover rounded mr-3"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-white font-medium truncate">{song.title}</h4>
-                            <p className="text-gray-400 text-sm truncate">{song.artist}</p>
-                          </div>
-                          <span className="text-gray-400 text-sm ml-2">{song.duration}</span>
-                        </li>
-                      ))}
-                    </>
-                  )}
-                </ul>
-              ) : (
-                <p className="text-gray-400 text-sm">No more songs in queue</p>
-              )}
+      {showQueueSidebar && currentTrack && (
+        <div className="w-80 bg-gray-900 border-l border-gray-800 flex flex-col">
+          <div className="p-4 border-b border-gray-800">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold">Now Playing</h3>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Music Player */}
-      {showPlayer && currentTrack && (
-        <MusicPlayer 
-          currentTrack={currentTrack} 
-          setCurrentTrack={setCurrentTrack}
-          isPlaying={isPlaying}
-          setIsPlaying={setIsPlaying}
-          onClose={() => {
-            setShowPlayer(false);
-            setIsPlaying(false);
-            setCurrentTrack(null);
-            setShowQueue(false);
-          }}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          hasNext={queue.length > 0 || repeatMode === "queue"}
-          hasPrevious={currentSongIndex > 0 || repeatMode === "queue"}
-          queue={playlistSongs}
-          currentSongIndex={currentSongIndex}
-          setCurrentSongIndex={setCurrentSongIndex}
-        />
+          <div className="p-4 border-b border-gray-800">
+            <div className="flex items-center gap-3 mb-4">
+              <img
+                src={currentTrack.cover}
+                alt={currentTrack.title}
+                className="w-16 h-16 rounded"
+              />
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium truncate">{currentTrack.title}</h4>
+                <p className="text-sm text-gray-400 truncate">
+                  {currentTrack.artist}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-400">
+                From: {playlist.name}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleRepeat}
+                  className={`p-2 rounded-full ${
+                    repeatMode !== "none"
+                      ? "text-green-500"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                  aria-label={`Repeat ${repeatMode}`}
+                >
+                  <FiRepeat
+                    size={16}
+                    className={repeatMode !== "none" ? "fill-current" : ""}
+                  />
+                  {repeatMode === "song" && (
+                    <span className="absolute -mt-6 ml-1 text-xs text-green-500">
+                      1
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="text-black p-2 rounded-full bg-green-500 hover:bg-green-400"
+                  aria-label={isPlaying ? "Pause" : "Play"}
+                >
+                  {isPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 border-b border-gray-800">
+            <div className="flex justify-between items-center">
+              <h3 className="font-medium">Next in Queue</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-400">
+                  {queue.length} songs
+                </span>
+                <button
+                  onClick={toggleShuffle}
+                  className={`p-2 rounded-full ${
+                    isShuffled
+                      ? "text-green-500"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                  aria-label={isShuffled ? "Unshuffle queue" : "Shuffle queue"}
+                >
+                  <FiShuffle
+                    size={16}
+                    className={isShuffled ? "fill-current" : ""}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto scrollbar-hide pb-4">
+            {queue.length > 0 || repeatMode === "queue" ? (
+              <div className="divide-y divide-gray-800">
+                {queue.map((song, index) => {
+                  const isLiked = likedSongs.includes(song.id);
+                  return (
+                    <div
+                      key={`${song.id}-${index}`}
+                      className="p-3 hover:bg-gray-800 cursor-pointer flex items-center gap-3 group"
+                      onClick={() => {
+                        const actualIndex = currentSongIndex + 1 + index;
+                        setCurrentSongIndex(actualIndex);
+                        setCurrentTrack(song);
+                        setIsPlaying(true);
+                        setShowPlayer(true);
+
+                        // Update queue
+                        const newQueue = [...queue.slice(index + 1)];
+                        setQueue(newQueue);
+                        if (!isShuffled) {
+                          setOriginalQueue(newQueue);
+                        }
+                      }}
+                    >
+                      <img
+                        src={song.cover}
+                        alt={song.title}
+                        className="w-10 h-10 rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{song.title}</h4>
+                        <p className="text-sm text-gray-400 truncate">
+                          {song.artist}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          className={`p-1 ${
+                            isLiked
+                              ? "text-green-500"
+                              : "text-gray-400 hover:text-white"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleLikeSong(song.id);
+                          }}
+                          aria-label={isLiked ? "Unlike song" : "Like song"}
+                        >
+                          <FiHeart
+                            size={18}
+                            className={isLiked ? "fill-current" : ""}
+                          />
+                        </button>
+                        <span className="text-sm text-gray-400">
+                          {song.duration}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {repeatMode === "queue" && (
+                  <>
+                    <div className="p-3 text-xs text-gray-500 text-center">
+                      Queue will repeat from the beginning
+                    </div>
+                    {playlistSongs
+                      .slice(0, currentSongIndex + 1)
+                      .map((song, index) => (
+                        <div
+                          key={`repeat-${song.id}-${index}`}
+                          className="p-3 hover:bg-gray-800 cursor-pointer flex items-center gap-3 group opacity-60"
+                          onClick={() => {
+                            setCurrentSongIndex(index);
+                            setCurrentTrack(song);
+                            setIsPlaying(true);
+                            setShowPlayer(true);
+
+                            // Update queue
+                            const newQueue = [
+                              ...playlistSongs.slice(index + 1),
+                            ];
+                            setQueue(newQueue);
+                            setOriginalQueue(newQueue);
+                          }}
+                        >
+                          <img
+                            src={song.cover}
+                            alt={song.title}
+                            className="w-10 h-10 rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium truncate">
+                              {song.title}
+                            </h4>
+                            <p className="text-sm text-gray-400 truncate">
+                              {song.artist}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              className={`p-1 ${
+                                likedSongs.includes(song.id)
+                                  ? "text-green-500"
+                                  : "text-gray-400 hover:text-white"
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleLikeSong(song.id);
+                              }}
+                              aria-label={
+                                likedSongs.includes(song.id)
+                                  ? "Unlike song"
+                                  : "Like song"
+                              }
+                            >
+                              <FiHeart
+                                size={18}
+                                className={
+                                  likedSongs.includes(song.id)
+                                    ? "fill-current"
+                                    : ""
+                                }
+                              />
+                            </button>
+                            <span className="text-sm text-gray-400">
+                              {song.duration}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 text-center text-gray-500">
+                <p>Queue is empty</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
