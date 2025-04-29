@@ -14,7 +14,7 @@ import {
 } from "react-icons/fi";
 import songsData from "../data/songs.json";
 
-const Sidebar = ({ onLogout, username }) => {
+const Sidebar = ({ onLogout, username, setCurrentTrack, setIsPlaying }) => {
   const [playlists, setPlaylists] = useState([]);
   const [likedSongs, setLikedSongs] = useState([]);
   const [likedPlaylists, setLikedPlaylists] = useState([]);
@@ -134,6 +134,21 @@ const Sidebar = ({ onLogout, username }) => {
     );
   };
 
+  const handleSongClick = (songId, e) => {
+    e.preventDefault();
+    const song = getSongDetails(songId);
+    if (song) {
+      setCurrentTrack({
+        title: song.title,
+        artist: song.artist,
+        cover: song.cover,
+        src: song.src,
+        lyrics: song.lyrics || null
+      });
+      setIsPlaying(true);
+    }
+  };
+
   if (isCollapsed) {
     return (
       <div className="hidden md:flex flex-col items-center h-full p-4 bg-[#040306] border-r border-gray-800">
@@ -234,6 +249,7 @@ const Sidebar = ({ onLogout, username }) => {
                     <Link
                       key={songId}
                       to={`/song/${songId}`}
+                      onClick={(e) => handleSongClick(songId, e)}
                       className="flex items-center p-1 text-gray-400 hover:text-white rounded transition group"
                     >
                       <div className="w-8 h-8 bg-gray-700 rounded mr-2 overflow-hidden flex-shrink-0">
