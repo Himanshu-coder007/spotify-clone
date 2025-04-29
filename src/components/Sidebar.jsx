@@ -11,6 +11,7 @@ import {
   FiHeart,
   FiPlay,
   FiLogOut,
+  FiUser,
 } from "react-icons/fi";
 import songsData from "../data/songs.json";
 
@@ -391,16 +392,14 @@ const Sidebar = ({ onLogout, username, setCurrentTrack, setIsPlaying }) => {
         </div>
       </div>
 
-      {/* User Section */}
+      {/* User Section - Simplified */}
       <div className="p-4 border-t border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center mr-2">
-              <span className="text-white text-xs font-bold">
-                {username ? username.charAt(0).toUpperCase() : "U"}
-              </span>
+            <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mr-2">
+              <FiUser className="text-gray-300" size={16} />
             </div>
-            <span className="text-white text-sm">{username || "User"}</span>
+            <span className="text-gray-300 text-sm">User</span>
           </div>
           <button
             onClick={onLogout}
